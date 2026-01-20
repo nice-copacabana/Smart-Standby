@@ -31,16 +31,50 @@ namespace SmartStandby
     public partial class App : Application
     {
         private Window? _window;
-
+        public IHost Host { get; }
 
         public App()
         {
             InitializeComponent();
+
+            Host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
+                .UseContentRoot(AppContext.BaseDirectory)
+                .ConfigureServices((context, services) =>
+                {
+                    // Core Helpers
+                    services.AddTransient<SmartStandby.Core.Helpers.PowerShellHelper>();
+
+                    // Core Services
+                    services.AddSingleton<SmartStandby.Core.Services.DatabaseService>();
+                    services.AddSingleton<SmartStandby.Core.Services.ProcessGuardian>();
+                    
+                    services.AddTransient<SmartStandby.Core.Services.BlockerScanner>();
+                    services.AddTransient<SmartStandby.Core.Services.NetworkManager>();
+                    services.AddTransient<SmartStandby.Core.Services.SleepService>();
+
+                    // ViewModels
+                    services.AddTransient<SmartStandby.ViewModels.MainWindowViewModel>();
+                    
+                    // Windows
+                    services.AddTransient<MainWindow>();
+                })
+                .UseSerilog((context, services, loggerConfiguration) => loggerConfiguration
+                    .ReadFrom.Configuration(context.Configuration)
+                    .Enrich.FromLogContext()
+                    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day))
+                .Build();
         }
 
-        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            _window = new MainWindow();
+            await Host.StartAsync();
+
+            // Initialize DB on startup
+            var db = Host.Services.GetRequiredService<SmartStandby.Core.Services.DatabaseService>();
+            await db.InitializeAsync();
+
+            // Resolve Main Window with DI
+            _window = Host.Services.GetRequiredService<MainWindow>();
             _window.Activate();
         }
     }
