@@ -1,0 +1,6 @@
+﻿namespace SmartStandby.Core;
+
+public class Class1
+{
+
+}

@@ -1,0 +1,27 @@
+## Visual Studio ##
+.vs/
+[Oo]bj/
+[Bb]in/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## .NET Core ##
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## SQLite ##
+*.db3
+*.db3-shm
+*.db3-wal
+
+## Logs ##
+logs/
+*.log
+
+## Windows ##
+Thumbs.db
+ehthumbs.db
+Desktop.ini
