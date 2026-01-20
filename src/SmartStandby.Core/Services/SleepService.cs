@@ -1,0 +1,96 @@
+using Serilog;
+using SmartStandby.Core.Helpers;
+using SmartStandby.Core.Models;
+
+namespace SmartStandby.Core.Services;
+
+public class SleepService
+{
+    private readonly BlockerScanner _scanner;
+    private readonly NetworkManager _network;
+    private readonly ProcessGuardian _guardian;
+    private readonly DatabaseService _db;
+
+    public SleepService(BlockerScanner scanner, NetworkManager network, ProcessGuardian guardian, DatabaseService db)
+    {
+        _scanner = scanner;
+        _network = network;
+        _guardian = guardian;
+        _db = db;
+    }
+
+    /// <summary>
+    /// Executes the smart sleep sequence.
+    /// </summary>
+    /// <param name="force">If true, ignores specific blockers or forces kill.</param>
+    public async Task<bool> ExecuteSmartSleepAsync(bool force = false)
+    {
+        Log.Information("Starting Smart Sleep Sequence...");
+
+        // 1. Detect Blockers
+        var blockers = await _scanner.ScanAsync();
+        if (blockers.Any())
+        {
+            Log.Information($"Detected {blockers.Count} blockers.");
+            foreach (var b in blockers)
+            {
+                Log.Information($"Blocker: {b}");
+                // TODO: Add Logic to check "Allowed Blockers" list
+                // For MVP: If it's an Application/Process type, try to kill specific ones if 'force' is true
+                // Implementation detail: Simple loop for now.
+            }
+        }
+
+        // 2. Network Silence
+        try 
+        {
+            await _network.DisconnectWifiAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to disconnect network. Proceeding anyway.");
+        }
+
+        // 3. Record Session Start
+        var session = new SleepSession
+        {
+            SleepTime = DateTime.Now,
+            IsManaged = true
+            // TODO: Get Battery Level
+        };
+
+        // 4. Trigger Sleep
+        Log.Information("Triggering System Sleep (S3)...");
+        bool success = NativeMethods.TriggerSleep(); // This call blocks until wake on some systems, or returns immediately on others.
+        // On modern Windows, SetSuspendState returns immediately usually.
+        // We might need to listen to PowerModeChanged events for true wake detection.
+        
+        if (!success)
+        {
+            Log.Error("Failed to trigger sleep via Native API.");
+            return false;
+        }
+
+        // 5. Post-Wake Logic (This might run immediately if SetSuspendState is non-blocking, making this tricky)
+        // For MVP, we assume we want to restore network "eventually". 
+        // Real-implementation: We should Hook SystemEvents.PowerModeChanged in the UI layer/Background Service
+        // and call RestoreNetwork() from there.
+        // For this function, strictly speaking, we just instigated sleep.
+        
+        return true;
+    }
+
+    public async Task WakeUpAsync()
+    {
+        Log.Information("System Waking Up. Restoring services...");
+        await _network.ConnectWifiAsync();
+        
+        var recentSession = (await _db.GetRecentSessionsAsync(1)).FirstOrDefault();
+        if (recentSession != null && recentSession.WakeTime == default)
+        {
+           recentSession.WakeTime = DateTime.Now;
+           // Update DB
+           // await _db.UpdateSession(recentSession); // Need to implement Update in DB Service
+        }
+    }
+}
