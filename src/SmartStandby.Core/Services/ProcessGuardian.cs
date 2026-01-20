@@ -11,16 +11,23 @@ public class ProcessGuardian
         "explorer", "winlogon", "csrss", "lsass", "services", "svchost", "dwm", "system", "idle"
     };
 
-    public bool KillProcess(string processName)
+    private readonly DatabaseService _db;
+
+    public ProcessGuardian(DatabaseService db)
+    {
+        _db = db;
+    }
+
+    public async Task<bool> KillProcessAsync(string processName)
     {
         if (string.IsNullOrWhiteSpace(processName)) return false;
         
         // Remove .exe extension if present for matching
         processName = Path.GetFileNameWithoutExtension(processName);
 
-        if (CriticalProcesses.Contains(processName))
+        if (CriticalProcesses.Contains(processName) || await IsWhitelistedAsync(processName + ".exe"))
         {
-            Log.Warning($"ProcessGuardian blocked attempt to kill critical process: {processName}");
+            Log.Warning($"ProcessGuardian blocked attempt to kill protected process: {processName}");
             return false;
         }
 
@@ -37,14 +44,22 @@ public class ProcessGuardian
             {
                 Log.Information($"Killing process: {p.ProcessName} (PID: {p.Id})");
                 p.Kill();
-                p.WaitForExit(3000); // Wait up to 3s
+                await p.WaitForExitAsync(); 
             }
             return true;
         }
         catch (Exception ex)
         {
-            Log.Error(ex,($"Failed to kill process: {processName}"));
+            Log.Error(ex, $"Failed to kill process: {processName}");
             return false;
         }
+    }
+
+    private async Task<bool> IsWhitelistedAsync(string fullProcessName)
+    {
+        var whitelist = await _db.GetWhitelistAsync();
+        // Simple containment check. Could be improved with exact matching or regex.
+        return whitelist.Any(w => string.Equals(w, fullProcessName, StringComparison.OrdinalIgnoreCase) 
+                               || string.Equals(w, Path.GetFileNameWithoutExtension(fullProcessName), StringComparison.OrdinalIgnoreCase));
     }
 }

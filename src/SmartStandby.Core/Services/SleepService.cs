@@ -34,10 +34,15 @@ public class SleepService
             Log.Information($"Detected {blockers.Count} blockers.");
             foreach (var b in blockers)
             {
-                Log.Information($"Blocker: {b}");
-                // TODO: Add Logic to check "Allowed Blockers" list
-                // For MVP: If it's an Application/Process type, try to kill specific ones if 'force' is true
-                // Implementation detail: Simple loop for now.
+                Log.Information($"Blocker: {b.Name} [{b.Type}]");
+
+                // Logic: If force is enabled, try to kill blocking processes
+                // We only target specific types usually, generally 'Execution' or 'Display' requests from apps.
+                if (force && !string.IsNullOrWhiteSpace(b.Name) && b.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                {
+                    Log.Information($"Force mode enabled. Attempting to kill blocker: {b.Name}");
+                    await _guardian.KillProcessAsync(b.Name); 
+                }
             }
         }
 

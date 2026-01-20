@@ -53,7 +53,8 @@ namespace SmartStandby
                     services.AddTransient<SmartStandby.Core.Services.SleepService>();
 
                     // ViewModels
-                    services.AddTransient<SmartStandby.ViewModels.MainWindowViewModel>();
+                    services.AddTransient<SmartStandby.ViewModels.DashboardViewModel>();
+                    services.AddTransient<SmartStandby.ViewModels.SettingsViewModel>();
                     
                     // Windows
                     services.AddTransient<MainWindow>();

@@ -1,50 +1,40 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using SmartStandby.ViewModels;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+using SmartStandby.Views;
 
 namespace SmartStandby
 {
-    /// <summary>
-    /// An empty window that can be used on its own or navigated to within a Frame.
-    /// </summary>
     public sealed partial class MainWindow : Window
     {
-        public MainWindowViewModel ViewModel => (MainWindowViewModel) ((FrameworkElement)Content).DataContext;
-
-        public MainWindow(MainWindowViewModel viewModel)
+        public MainWindow()
         {
             this.InitializeComponent();
-            ((FrameworkElement)Content).DataContext = viewModel;
             
-            // Auto-refresh on load
-            if (Content is FrameworkElement root)
+            // Navigate to Dashboard initially
+            ContentFrame.Navigate(typeof(DashboardPage));
+            NavView.SelectedItem = NavView.MenuItems[0];
+        }
+
+        private void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+        {
+            if (args.IsSettingsInvoked)
             {
-                root.Loaded += async (s, e) => 
+                 // We disabled built-in settings item to use our own custom one, 
+                 // but if enabled, we would navigate here.
+            }
+            else
+            {
+                var tag = args.InvokedItemContainer.Tag.ToString();
+                switch (tag)
                 {
-                    if (viewModel.RefreshBlockersCommand.CanExecute(null))
-                        await viewModel.RefreshBlockersCommand.ExecuteAsync(null);
-                };
+                    case "Dashboard":
+                        ContentFrame.Navigate(typeof(DashboardPage));
+                        break;
+                    case "Settings":
+                        ContentFrame.Navigate(typeof(SettingsPage));
+                        break;
+                }
             }
         }
-        
-        // Default constructor for XAML previewer fallback (optional, but good practice if needed)
-        // However, with DI, we usually rely on the DI container calling the parameterized constructor.
-        // WinUI Xaml Compiler sometimes strictly requires a default constructor if used as resource.
-        // But for MainWindow, it's usually fine.
     }
 }

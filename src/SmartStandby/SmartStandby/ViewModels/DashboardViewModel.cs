@@ -6,7 +6,7 @@ using System.Collections.ObjectModel;
 
 namespace SmartStandby.ViewModels;
 
-public partial class MainWindowViewModel : ObservableObject
+public partial class DashboardViewModel : ObservableObject
 {
     private readonly BlockerScanner _scanner;
     private readonly SleepService _sleepService;
@@ -19,7 +19,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     public ObservableCollection<BlockerInfo> Blockers { get; } = new();
 
-    public MainWindowViewModel(BlockerScanner scanner, SleepService sleepService)
+    public DashboardViewModel(BlockerScanner scanner, SleepService sleepService)
     {
         _scanner = scanner;
         _sleepService = sleepService;
