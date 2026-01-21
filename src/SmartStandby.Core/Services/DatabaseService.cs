@@ -51,6 +51,15 @@ public class DatabaseService
                             .ToListAsync();
     }
 
+    public async Task<List<SleepSession>> GetSessionsAfterAsync(DateTime date)
+    {
+        await InitializeAsync();
+        return await _database.Table<SleepSession>()
+                            .Where(s => s.SleepTime >= date)
+                            .OrderBy(s => s.SleepTime)
+                            .ToListAsync();
+    }
+
     // --- AppConfig ---
     public async Task<string?> GetConfigAsync(string key)
     {

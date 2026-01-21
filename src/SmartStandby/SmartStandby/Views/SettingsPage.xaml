@@ -5,7 +5,8 @@
     xmlns:local="using:SmartStandby.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    x:Name="RootPage">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="24">
         <StackPanel Spacing="20">
@@ -30,14 +31,14 @@
 
                 <ListView ItemsSource="{Binding WhitelistProcesses}" Height="200" BorderThickness="1" BorderBrush="#33000000" CornerRadius="4">
                     <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="x:String">
+                        <DataTemplate>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="{x:Bind}" VerticalAlignment="Center"/>
-                                <Button Grid.Column="1" Command="{Binding ElementName=RootPage, Path=ViewModel.RemoveWhitelistCommand}" CommandParameter="{x:Bind}" Content="Remove" FontSize="10" Margin="0,0,10,0"/>
+                                <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Command="{Binding ElementName=RootPage, Path=ViewModel.RemoveWhitelistCommand}" CommandParameter="{Binding}" Content="Remove" FontSize="10" Margin="0,0,10,0"/>
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>

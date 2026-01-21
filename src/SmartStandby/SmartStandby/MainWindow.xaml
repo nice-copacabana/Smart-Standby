@@ -1,24 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Window
     x:Class="SmartStandby.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:SmartStandby"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     mc:Ignorable="d">
 
     <Grid>
-        <NavigationView x:Name="NavView" PaneDisplayMode="Left" ItemInvoked="NavView_ItemInvoked" IsSettingsVisible="False">
+        <NavigationView x:Name="NavView" 
+                        PaneDisplayMode="Left"
+                        IsSettingsVisible="False"
+                        SelectionChanged="NavView_SelectionChanged"
+                        Loaded="NavView_Loaded">
             <NavigationView.MenuItems>
-                <NavigationViewItem Icon="Home" Content="Dashboard" Tag="Dashboard" IsSelected="True"/>
-                <NavigationViewItem Icon="Setting" Content="Settings" Tag="Settings"/>
+                <NavigationViewItem Icon="Home" Content="Dashboard" Tag="Dashboard" />
+                <NavigationViewItem Icon="Setting" Content="Settings" Tag="Settings" />
             </NavigationView.MenuItems>
 
-            <NavigationView.ContentOverlay>
-               <!-- Optional Overlay content -->
-            </NavigationView.ContentOverlay>
-
-            <Frame x:Name="ContentFrame"/>
+            <Frame x:Name="ContentFrame" />
         </NavigationView>
     </Grid>
 </Window>

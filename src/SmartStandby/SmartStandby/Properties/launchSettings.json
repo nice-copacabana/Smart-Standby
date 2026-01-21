@@ -1,8 +1,5 @@
 {
   "profiles": {
-    "SmartStandby (Package)": {
-      "commandName": "MsixPackage"
-    },
     "SmartStandby (Unpackaged)": {
       "commandName": "Project"
     }
