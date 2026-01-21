@@ -12,7 +12,6 @@ namespace SmartStandby.Views
         public SettingsPage()
         {
             this.InitializeComponent();
-            this.Name = "RootPage";
             ViewModel = ((App)Application.Current).Host.Services.GetRequiredService<SettingsViewModel>();
             DataContext = ViewModel;
         }

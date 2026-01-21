@@ -8,7 +8,9 @@ public class ProcessGuardian
     // Safety list: never kill these even if requested.
     private static readonly HashSet<string> CriticalProcesses = new(StringComparer.OrdinalIgnoreCase)
     {
-        "explorer", "winlogon", "csrss", "lsass", "services", "svchost", "dwm", "system", "idle"
+        "explorer", "winlogon", "csrss", "lsass", "services", "svchost", "dwm", "system", "idle",
+        "smss", "audiodg", "fontdrvhost", "spoolsv", "taskhostw", "sihost", "taskmgr", "ctfmon",
+        "smartstandby", "smartstandby.core" // Don't kill self
     };
 
     private readonly DatabaseService _db;

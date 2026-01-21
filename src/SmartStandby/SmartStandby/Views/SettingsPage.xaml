@@ -16,6 +16,7 @@
             <StackPanel Spacing="10">
                 <TextBlock Text="Behavior" Style="{ThemeResource SubtitleTextBlockStyle}"/>
                 <ToggleSwitch Header="Disconnect Network on Sleep" IsOn="{Binding EnableNetworkDisconnect}" OnContent="Enabled" OffContent="Disabled"/>
+                <ToggleSwitch Header="Run at Windows Startup" IsOn="{Binding EnableRunOnStartup}" OnContent="Enabled" OffContent="Disabled"/>
                 <ToggleSwitch Header="Apply TDR Patch (Fix Black Screen)" IsOn="{Binding EnableTdrPatch}" OnContent="Enabled" OffContent="Disabled"/>
             </StackPanel>
 

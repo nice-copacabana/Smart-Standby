@@ -47,22 +47,27 @@ public class SleepService
         }
 
         // 2. Network Silence
-        try 
+        bool disconnectNetwork = await _db.GetConfigBoolAsync("EnableNetworkDisconnect", true);
+        if (disconnectNetwork)
         {
-            await _network.DisconnectWifiAsync();
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Failed to disconnect network. Proceeding anyway.");
+            try 
+            {
+                await _network.DisconnectWifiAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to disconnect network. Proceeding anyway.");
+            }
         }
 
         // 3. Record Session Start
         var session = new SleepSession
         {
             SleepTime = DateTime.Now,
-            IsManaged = true
-            // TODO: Get Battery Level
+            IsManaged = true,
+            BatteryStart = GetBatteryPercentage()
         };
+        await _db.AddSessionAsync(session);
 
         // 4. Trigger Sleep
         Log.Information("Triggering System Sleep (S3)...");
@@ -94,8 +99,43 @@ public class SleepService
         if (recentSession != null && recentSession.WakeTime == default)
         {
            recentSession.WakeTime = DateTime.Now;
+           recentSession.BatteryEnd = GetBatteryPercentage();
            // Update DB
-           // await _db.UpdateSession(recentSession); // Need to implement Update in DB Service
+           await _db.UpdateSessionAsync(recentSession);
         }
+    }
+
+    private int GetBatteryPercentage()
+    {
+        try
+        {
+            var status = new SYSTEM_POWER_STATUS();
+            if (GetSystemPowerStatus(out status))
+            {
+                if (status.BatteryLifePercent != 255)
+                {
+                    return status.BatteryLifePercent;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed to get battery status.");
+        }
+        return -1; // Unknown
+    }
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetSystemPowerStatus(out SYSTEM_POWER_STATUS lpSystemPowerStatus);
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct SYSTEM_POWER_STATUS
+    {
+        public byte ACLineStatus;
+        public byte BatteryFlag;
+        public byte BatteryLifePercent;
+        public byte SystemStatusFlag;
+        public int BatteryLifeTime;
+        public int BatteryFullLifeTime;
     }
 }

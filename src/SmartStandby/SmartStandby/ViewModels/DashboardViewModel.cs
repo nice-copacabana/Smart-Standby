@@ -4,7 +4,9 @@ using SmartStandby.Core.Services;
 using SmartStandby.Core.Models;
 using SmartStandby.Models;
 using System.Collections.ObjectModel;
-using System.Linq; // Ensure Linq is available
+using System.Collections.Generic;
+using System;
+using System.Threading.Tasks;
 
 namespace SmartStandby.ViewModels;
 
@@ -15,14 +17,13 @@ public partial class DashboardViewModel : ObservableObject
     private readonly DatabaseService _db;
 
     [ObservableProperty]
-    private string _statusMessage = "Ready";
+    public partial string StatusMessage { get; set; } = "Ready";
 
     [ObservableProperty]
-    private bool _isBusy;
+    public partial bool IsBusy { get; set; }
 
     public ObservableCollection<BlockerInfo> Blockers { get; } = new();
     
-    // Custom Chart Data
     public ObservableCollection<ChartDataPoint> ChartData { get; } = new();
 
     public DashboardViewModel(BlockerScanner scanner, SleepService sleepService, DatabaseService db)
@@ -31,17 +32,16 @@ public partial class DashboardViewModel : ObservableObject
         _sleepService = sleepService;
         _db = db;
         
-        LoadChartDataAsync();
+        _ = LoadChartDataAsync();
     }
 
-    private async void LoadChartDataAsync()
+    private async Task LoadChartDataAsync()
     {
         try 
         {
             var sevenDaysAgo = DateTime.Now.Date.AddDays(-6);
             var sessions = await _db.GetSessionsAfterAsync(sevenDaysAgo);
 
-            // Group by Date and Sum Duration
             var grouped = sessions.GroupBy(s => s.SleepTime.Date)
                                   .ToDictionary(g => g.Key, g => g.Sum(s => s.DurationMinutes) / 60.0);
 
@@ -51,7 +51,7 @@ public partial class DashboardViewModel : ObservableObject
             for (int i = 0; i < 7; i++)
             {
                 var date = sevenDaysAgo.AddDays(i);
-                double val = grouped.ContainsKey(date) ? grouped[date] : 0;
+                double val = grouped.TryGetValue(date, out var hours) ? hours : 0;
                 if (val > maxVal) maxVal = val;
                 
                 points.Add(new ChartDataPoint 
@@ -62,21 +62,18 @@ public partial class DashboardViewModel : ObservableObject
                 });
             }
             
-            // Normalize Height (Max 150px)
             double maxHeight = 150;
-            if (maxVal == 0) maxVal = 1; // Prevent div by zero using 1 hr as baseline if empty
+            double scaleRatio = maxVal > 0 ? maxVal : 1;
 
             ChartData.Clear();
             foreach (var p in points)
             {
-                p.Height = (p.Value / maxVal) * maxHeight;
-                // Min height for visibility
+                p.Height = (p.Value / scaleRatio) * maxHeight;
                 if (p.Value > 0 && p.Height < 4) p.Height = 4;
-                
                 ChartData.Add(p);
             }
         }
-        catch (Exception ex) 
+        catch (Exception) 
         {
             StatusMessage = "Failed to load chart data.";
         }
@@ -85,6 +82,7 @@ public partial class DashboardViewModel : ObservableObject
     [RelayCommand]
     private async Task RefreshBlockersAsync()
     {
+        if (IsBusy) return;
         IsBusy = true;
         StatusMessage = "Scanning for blockers...";
         
@@ -98,9 +96,9 @@ public partial class DashboardViewModel : ObservableObject
             }
             StatusMessage = $"Found {results.Count} blockers.";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            StatusMessage = $"Scan failed: {ex.Message}";
+            StatusMessage = "Scan failed.";
         }
         finally
         {
@@ -111,6 +109,7 @@ public partial class DashboardViewModel : ObservableObject
     [RelayCommand]
     private async Task SmartSleepAsync()
     {
+        if (IsBusy) return;
         IsBusy = true;
         StatusMessage = "Initiating Smart Sleep...";
 
@@ -133,8 +132,6 @@ public partial class DashboardViewModel : ObservableObject
         finally
         {
             IsBusy = false;
-            // In a real scenario, execution might pause here during sleep,
-            // or the app might be suspended.
         }
     }
 }

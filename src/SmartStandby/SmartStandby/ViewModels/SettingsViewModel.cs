@@ -12,13 +12,19 @@ public partial class SettingsViewModel : ObservableObject
     private readonly SystemTweaker _tweaker;
 
     [ObservableProperty]
-    private bool _enableNetworkDisconnect = true;
+    public partial bool EnableNetworkDisconnect { get; set; } = true;
+    partial void OnEnableNetworkDisconnectChanged(bool value) => SaveSettingsCommand.Execute(null);
 
     [ObservableProperty]
-    private bool _enableTdrPatch = false;
+    public partial bool EnableTdrPatch { get; set; } = false;
+    partial void OnEnableTdrPatchChanged(bool value) => SaveSettingsCommand.Execute(null);
 
     [ObservableProperty]
-    private string _newProcessName;
+    public partial bool EnableRunOnStartup { get; set; } = false;
+    partial void OnEnableRunOnStartupChanged(bool value) => SaveSettingsCommand.Execute(null);
+
+    [ObservableProperty]
+    public partial string NewProcessName { get; set; } = string.Empty;
 
     public ObservableCollection<string> WhitelistProcesses { get; } = new();
 
@@ -33,6 +39,7 @@ public partial class SettingsViewModel : ObservableObject
     {
         EnableNetworkDisconnect = await _databaseService.GetConfigBoolAsync("EnableNetworkDisconnect", true);
         EnableTdrPatch = await _databaseService.GetConfigBoolAsync("EnableTdrPatch", false);
+        EnableRunOnStartup = await _databaseService.GetConfigBoolAsync("EnableRunOnStartup", false);
 
         var list = await _databaseService.GetWhitelistAsync();
         WhitelistProcesses.Clear();
@@ -68,8 +75,10 @@ public partial class SettingsViewModel : ObservableObject
     {
         await _databaseService.SetConfigBoolAsync("EnableNetworkDisconnect", EnableNetworkDisconnect);
         await _databaseService.SetConfigBoolAsync("EnableTdrPatch", EnableTdrPatch);
+        await _databaseService.SetConfigBoolAsync("EnableRunOnStartup", EnableRunOnStartup);
         
         // Apply System Tweaks immediately
         _tweaker.ApplyTdrPatch(EnableTdrPatch);
+        _tweaker.SetRunOnStartup(EnableRunOnStartup);
     }
 }

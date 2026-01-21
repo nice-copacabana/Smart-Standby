@@ -21,9 +21,19 @@ namespace SmartStandby
             // App Window & Title
             this.Title = "Smart Standby";
 
+            // Initialize System Tray (P/Invoke)
+            _trayService = new SmartStandby.Services.TrayIconService(WinRT.Interop.WindowNative.GetWindowHandle(this));
+
             // Navigate to Dashboard initially
             ContentFrame.Navigate(typeof(DashboardPage));
             NavView.SelectedItem = NavView.MenuItems[0];
+        }
+
+        private SmartStandby.Services.TrayIconService _trayService; 
+
+        private void MainWindow_Closed(object sender, WindowEventArgs args)
+        {
+             _trayService?.Dispose();
         }
 
         private void NavView_Loaded(object sender, RoutedEventArgs e)

@@ -6,7 +6,7 @@ namespace SmartStandby.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    private Microsoft.UI.Xaml.Window _window;
+    private Microsoft.UI.Xaml.Window? _window;
 
     public void Initialize(Microsoft.UI.Xaml.Window window)
     {
@@ -16,10 +16,7 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void ShowWindow()
     {
-        if (_window != null)
-        {
-            _window.Activate();
-        }
+        _window?.Activate();
     }
 
     [RelayCommand]

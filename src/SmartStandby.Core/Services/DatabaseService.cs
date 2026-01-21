@@ -42,6 +42,12 @@ public class DatabaseService
         await _database.InsertAsync(session);
     }
 
+    public async Task UpdateSessionAsync(SleepSession session)
+    {
+        await InitializeAsync();
+        await _database.UpdateAsync(session);
+    }
+
     public async Task<List<SleepSession>> GetRecentSessionsAsync(int limit = 20)
     {
         await InitializeAsync();

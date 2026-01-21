@@ -48,11 +48,23 @@ public class PowerMonitorService : IDisposable
         if (e.Mode == PowerModes.Suspend)
         {
             Log.Information("System is Suspending (Sleep).");
-            await _db.AddSessionAsync(new SleepSession 
-            { 
-                SleepTime = DateTime.Now, 
-                IsManaged = false // Triggered by System/User, not our "Smart Sleep" button explicitly (though hard to distinguish here) 
-            });
+            
+            // Deduplication: Check if a managed session was created in the last 15 seconds
+            var sessions = await _db.GetRecentSessionsAsync(1);
+            var lastSession = sessions.FirstOrDefault();
+            
+            if (lastSession != null && lastSession.IsManaged && (DateTime.Now - lastSession.SleepTime).TotalSeconds < 15)
+            {
+                Log.Information("Managed sleep session detected recently. Skipping duplicate log.");
+            }
+            else
+            {
+                await _db.AddSessionAsync(new SleepSession 
+                { 
+                    SleepTime = DateTime.Now, 
+                    IsManaged = false 
+                });
+            }
         }
         else if (e.Mode == PowerModes.Resume)
         {
@@ -61,14 +73,12 @@ public class PowerMonitorService : IDisposable
             var sessions = await _db.GetRecentSessionsAsync(1);
             var lastSession = sessions.FirstOrDefault();
             
-            // If we found a recent session that hasn't been closed (WakeTime is default)
-            // Or if it's very recent (e.g. within last day)
-            if (lastSession != null && (lastSession.WakeTime == default || lastSession.SleepTime > DateTime.Now.AddDays(-1)))
+            // Update if it's an open session (WakeTime is default)
+            if (lastSession != null && lastSession.WakeTime == default(DateTime))
             {
-                // Note: DatabaseService currently lacks Update. 
-                // Since this is MVP, we will just log it for now.
-                // In a real app, we would add UpdateSessionAsync to DB Service.
-                Log.Information($"Wake detected. (Ideally would update session from {lastSession.SleepTime})");
+                lastSession.WakeTime = DateTime.Now;
+                await _db.UpdateSessionAsync(lastSession);
+                Log.Information($"Session Updated. Sleep: {lastSession.SleepTime}, Wake: {lastSession.WakeTime}");
             }
         }
     }
