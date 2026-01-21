@@ -47,6 +47,8 @@ namespace SmartStandby
                     // Core Services
                     services.AddSingleton<SmartStandby.Core.Services.DatabaseService>();
                     services.AddSingleton<SmartStandby.Core.Services.ProcessGuardian>();
+                    services.AddSingleton<SmartStandby.Core.Services.PowerMonitorService>();
+                    services.AddTransient<SmartStandby.Core.Services.SystemTweaker>();
                     
                     services.AddTransient<SmartStandby.Core.Services.BlockerScanner>();
                     services.AddTransient<SmartStandby.Core.Services.NetworkManager>();
@@ -73,6 +75,10 @@ namespace SmartStandby
             // Initialize DB on startup
             var db = Host.Services.GetRequiredService<SmartStandby.Core.Services.DatabaseService>();
             await db.InitializeAsync();
+
+            // Start Power Monitoring
+            var powerMonitor = Host.Services.GetRequiredService<SmartStandby.Core.Services.PowerMonitorService>();
+            powerMonitor.StartMonitoring();
 
             // Resolve Main Window with DI
             _window = Host.Services.GetRequiredService<MainWindow>();

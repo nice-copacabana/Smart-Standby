@@ -9,6 +9,7 @@ namespace SmartStandby.ViewModels;
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly DatabaseService _databaseService;
+    private readonly SystemTweaker _tweaker;
 
     [ObservableProperty]
     private bool _enableNetworkDisconnect = true;
@@ -21,9 +22,10 @@ public partial class SettingsViewModel : ObservableObject
 
     public ObservableCollection<string> WhitelistProcesses { get; } = new();
 
-    public SettingsViewModel(DatabaseService databaseService)
+    public SettingsViewModel(DatabaseService databaseService, SystemTweaker tweaker)
     {
         _databaseService = databaseService;
+        _tweaker = tweaker;
         LoadSettings();
     }
 
@@ -66,5 +68,8 @@ public partial class SettingsViewModel : ObservableObject
     {
         await _databaseService.SetConfigBoolAsync("EnableNetworkDisconnect", EnableNetworkDisconnect);
         await _databaseService.SetConfigBoolAsync("EnableTdrPatch", EnableTdrPatch);
+        
+        // Apply System Tweaks immediately
+        _tweaker.ApplyTdrPatch(EnableTdrPatch);
     }
 }
