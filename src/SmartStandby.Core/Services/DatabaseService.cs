@@ -120,4 +120,10 @@ public class DatabaseService
             await _database.DeleteAsync(item);
         }
     }
+
+    public async Task ClearSessionsAsync()
+    {
+        await InitializeAsync();
+        await _database.DeleteAllAsync<SleepSession>();
+    }
 }

@@ -1,12 +1,35 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace SmartStandby.Services;
+namespace SmartStandby.Core.Helpers;
 
-public static class Win32Native
+public static class Win32Utils
 {
-    public const int GWL_WNDPROC = -4;
+    // --- Power Management ---
+    
+    [DllImport("powrprof.dll", SetLastError = true)]
+    private static extern bool SetSuspendState(bool hibernate, bool forceCritical, bool disableWakeEvent);
 
+    public static bool TriggerSleep(bool hibernate = false) => SetSuspendState(hibernate, false, false);
+    public static bool TriggerHibernate() => SetSuspendState(true, false, false);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool GetSystemPowerStatus(out SYSTEM_POWER_STATUS lpSystemPowerStatus);
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct SYSTEM_POWER_STATUS
+    {
+        public byte ACLineStatus;
+        public byte BatteryFlag;
+        public byte BatteryLifePercent;
+        public byte SystemStatusFlag;
+        public int BatteryLifeTime;
+        public int BatteryFullLifeTime;
+    }
+
+    // --- Window & UI (Tray) ---
+
+    public const int GWL_WNDPROC = -4;
     public delegate IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
     [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]

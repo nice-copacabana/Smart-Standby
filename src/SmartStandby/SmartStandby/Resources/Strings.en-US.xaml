@@ -1,0 +1,29 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:system="using:System">
+
+    <system:String x:Key="AppTitle">Smart Standby</system:String>
+    
+    <!-- Dashboard -->
+    <system:String x:Key="NavDashboard">Dashboard</system:String>
+    <system:String x:Key="NavSettings">Settings</system:String>
+    <system:String x:Key="ButtonSmartSleep">SMART SLEEP</system:String>
+    <system:String x:Key="StatusHealthy">Healthy</system:String>
+    <system:String x:Key="StatusWarning">Warning</system:String>
+    <system:String x:Key="WakeHealthHeader">Wake Health</system:String>
+    <system:String x:Key="RecentSessionsHeader">Recent Sessions</system:String>
+    <system:String x:Key="NoSessionsMessage">No sleep sessions recorded yet.</system:String>
+
+    <!-- Settings -->
+    <system:String x:Key="SettingsHeader">Application Settings</system:String>
+    <system:String x:Key="ConfigGeneral">General Configuration</system:String>
+    <system:String x:Key="ConfigNetwork">Disconnect Network on Sleep</system:String>
+    <system:String x:Key="ConfigStartup">Run at Windows Startup</system:String>
+    <system:String x:Key="ConfigTdr">Apply TDR Patch (Fix Black Screen)</system:String>
+    <system:String x:Key="ConfigThreshold">Battery Drain Health Threshold (%/h)</system:String>
+    <system:String x:Key="WhitelistHeader">Process Whitelist (Safe Apps)</system:String>
+    <system:String x:Key="ButtonClearHistory">Clear Session History</system:String>
+    <system:String x:Key="ButtonOpenLogs">Open Logs Folder</system:String>
+    <system:String x:Key="AboutHeader">About &amp; Updates</system:String>
+</ResourceDictionary>

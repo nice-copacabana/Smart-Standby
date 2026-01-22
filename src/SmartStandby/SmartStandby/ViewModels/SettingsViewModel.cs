@@ -40,9 +40,43 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnEnableRunOnStartupChanged(bool value) => SaveSettingsCommand.Execute(null);
 
     [ObservableProperty]
+    public partial double BatteryDrainThreshold { get; set; } = 3.0;
+    partial void OnBatteryDrainThresholdChanged(double value) => SaveSettingsCommand.Execute(null);
+
+    [ObservableProperty]
     public partial string NewProcessName { get; set; } = string.Empty;
 
     public ObservableCollection<string> WhitelistProcesses { get; } = new();
+
+    [RelayCommand]
+    public async Task ClearHistoryAsync()
+    {
+        await _databaseService.ClearSessionsAsync();
+        // Notify user?
+        UpdateStatusText = "Session history cleared.";
+    }
+
+    [RelayCommand]
+    public void OpenLogsFolder()
+    {
+        try
+        {
+            string logFolder = Path.Combine(AppContext.BaseDirectory, "logs");
+            if (Directory.Exists(logFolder))
+            {
+                System.Diagnostics.Process.Start("explorer.exe", logFolder);
+            }
+            else
+            {
+                UpdateStatusText = "Logs folder not found.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to open logs folder.");
+            UpdateStatusText = $"Error opening logs folder: {ex.Message}";
+        }
+    }
 
     public SettingsViewModel(DatabaseService databaseService, SystemTweaker tweaker, UpdateService updateService)
     {
@@ -59,6 +93,10 @@ public partial class SettingsViewModel : ObservableObject
         EnableNetworkDisconnect = await _databaseService.GetConfigBoolAsync("EnableNetworkDisconnect", true);
         EnableTdrPatch = await _databaseService.GetConfigBoolAsync("EnableTdrPatch", false);
         EnableRunOnStartup = await _databaseService.GetConfigBoolAsync("EnableRunOnStartup", false);
+        
+        string thresholdStr = await _databaseService.GetConfigAsync("BatteryDrainThreshold", "3.0");
+        if (double.TryParse(thresholdStr, out double threshold))
+            BatteryDrainThreshold = threshold;
 
         var list = await _databaseService.GetWhitelistAsync();
         WhitelistProcesses.Clear();
@@ -129,6 +167,7 @@ public partial class SettingsViewModel : ObservableObject
         await _databaseService.SetConfigBoolAsync("EnableNetworkDisconnect", EnableNetworkDisconnect);
         await _databaseService.SetConfigBoolAsync("EnableTdrPatch", EnableTdrPatch);
         await _databaseService.SetConfigBoolAsync("EnableRunOnStartup", EnableRunOnStartup);
+        await _databaseService.SetConfigAsync("BatteryDrainThreshold", BatteryDrainThreshold.ToString("F1"));
         
         // Apply System Tweaks immediately
         _tweaker.ApplyTdrPatch(EnableTdrPatch);

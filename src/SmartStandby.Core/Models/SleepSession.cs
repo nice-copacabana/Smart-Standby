@@ -16,6 +16,11 @@ public class SleepSession
     public double DurationMinutes => (WakeTime - SleepTime).TotalMinutes;
 
     /// <summary>
+    /// Battery drain rate in % per hour
+    /// </summary>
+    public double DrainRate => DurationMinutes > 0 ? (BatteryStart - BatteryEnd) / (DurationMinutes / 60.0) : 0;
+
+    /// <summary>
     /// The source that triggered the wake (e.g., "PowerBtn", "Mouse")
     /// </summary>
     public string WakeSource { get; set; } = string.Empty;

@@ -68,6 +68,29 @@ namespace SmartStandby
                     .Enrich.FromLogContext()
                     .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day))
                 .Build();
+
+            LoadLanguageResources();
+        }
+
+        private void LoadLanguageResources()
+        {
+            var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+            string resourcePath = "Resources/Strings.en-US.xaml"; // Default
+            
+            if (culture.StartsWith("zh"))
+            {
+                resourcePath = "Resources/Strings.zh-CN.xaml";
+            }
+
+            try
+            {
+                var dict = new ResourceDictionary { Source = new Uri($"ms-appx:///SmartStandby/{resourcePath}") };
+                Application.Current.Resources.MergedDictionaries.Add(dict);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to load language resources.");
+            }
         }
 
         protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)

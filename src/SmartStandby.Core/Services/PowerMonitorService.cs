@@ -144,15 +144,28 @@ public class PowerMonitorService : IDisposable
             string result = await _ps.ExecuteScriptAsync(script);
             if (int.TryParse(result.Trim(), out int errorCount))
             {
+                // 2. Battery Drain Check
+                var sessions = await _db.GetRecentSessionsAsync(1);
+                var lastSession = sessions.FirstOrDefault();
+                double drainRate = lastSession?.DrainRate ?? 0;
+                
+                string thresholdStr = await _db.GetConfigAsync("BatteryDrainThreshold", "3.0");
+                double.TryParse(thresholdStr, out double threshold);
+
                 if (errorCount > 0)
                 {
-                    Log.Warning($"Wake-up Health Check: Detected {errorCount} critical power events/errors in recent logs.");
-                    await SaveHealthStatusAsync("Warning", $"Detected {errorCount} critical power events/errors.");
+                    Log.Warning($"Wake-up Health Check: Detected {errorCount} critical power events/errors.");
+                    await SaveHealthStatusAsync("Warning", $"Detected {errorCount} power errors in logs.");
+                }
+                else if (drainRate > threshold)
+                {
+                    Log.Warning($"Wake-up Health Check: High battery drain detected ({drainRate:F1}%/h > {threshold:F1}%/h).");
+                    await SaveHealthStatusAsync("Warning", $"Standby drain too high: {drainRate:F1}%/h.");
                 }
                 else
                 {
-                    Log.Information("Wake-up Health Check Completed: Status Healthy (No recent critical power events).");
-                    await SaveHealthStatusAsync("Healthy", "No recent critical power events detected.");
+                    Log.Information("Wake-up Health Check Completed: Status Healthy.");
+                    await SaveHealthStatusAsync("Healthy", "System status healthy and power efficient.");
                 }
             }
         }

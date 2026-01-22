@@ -103,7 +103,7 @@ public class SleepService
     public async Task HibernateAsync()
     {
         Log.Information("Backpack Guard: Triggering forced Hibernation due to inactivity after wake.");
-        NativeMethods.TriggerHibernate();
+        Win32Utils.TriggerHibernate();
     }
 
     public async Task WakeUpAsync()
@@ -125,8 +125,7 @@ public class SleepService
     {
         try
         {
-            var status = new SYSTEM_POWER_STATUS();
-            if (GetSystemPowerStatus(out status))
+            if (Win32Utils.GetSystemPowerStatus(out var status))
             {
                 if (status.BatteryLifePercent != 255)
                 {
@@ -139,19 +138,5 @@ public class SleepService
             Log.Warning(ex, "Failed to get battery status.");
         }
         return -1; // Unknown
-    }
-
-    [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool GetSystemPowerStatus(out SYSTEM_POWER_STATUS lpSystemPowerStatus);
-
-    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
-    private struct SYSTEM_POWER_STATUS
-    {
-        public byte ACLineStatus;
-        public byte BatteryFlag;
-        public byte BatteryLifePercent;
-        public byte SystemStatusFlag;
-        public int BatteryLifeTime;
-        public int BatteryFullLifeTime;
     }
 }

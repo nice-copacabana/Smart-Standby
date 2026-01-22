@@ -10,19 +10,32 @@
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="24">
         <StackPanel Spacing="20">
-            <TextBlock Text="Settings" Style="{ThemeResource TitleTextBlockStyle}"/>
+            <TextBlock Text="{StaticResource SettingsHeader}" Style="{ThemeResource TitleTextBlockStyle}"/>
 
             <!-- Toggles -->
             <StackPanel Spacing="10">
-                <TextBlock Text="Behavior" Style="{ThemeResource SubtitleTextBlockStyle}"/>
-                <ToggleSwitch Header="Disconnect Network on Sleep" IsOn="{Binding EnableNetworkDisconnect}" OnContent="Enabled" OffContent="Disabled"/>
-                <ToggleSwitch Header="Run at Windows Startup" IsOn="{Binding EnableRunOnStartup}" OnContent="Enabled" OffContent="Disabled"/>
-                <ToggleSwitch Header="Apply TDR Patch (Fix Black Screen)" IsOn="{Binding EnableTdrPatch}" OnContent="Enabled" OffContent="Disabled"/>
+                <TextBlock Text="{StaticResource ConfigGeneral}" Style="{ThemeResource SubtitleTextBlockStyle}"/>
+                <ToggleSwitch Header="{StaticResource ConfigNetwork}" IsOn="{Binding EnableNetworkDisconnect}" OnContent="Enabled" OffContent="Disabled"/>
+                <ToggleSwitch Header="{StaticResource ConfigStartup}" IsOn="{Binding EnableRunOnStartup}" OnContent="Enabled" OffContent="Disabled"/>
+                <ToggleSwitch Header="{StaticResource ConfigTdr}" IsOn="{Binding EnableTdrPatch}" OnContent="Enabled" OffContent="Disabled"/>
+                
+                <StackPanel Spacing="4" Margin="0,10,0,0">
+                    <TextBlock Text="{StaticResource ConfigThreshold}" Style="{ThemeResource BodyTextBlockStyle}"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Slider Minimum="0.5" Maximum="20.0" StepFrequency="0.5" Value="{Binding BatteryDrainThreshold, Mode=TwoWay}"/>
+                        <TextBlock Grid.Column="1" Text="{Binding BatteryDrainThreshold, StringFormat='{}{0:F1}%'}" VerticalAlignment="Center" Margin="12,0,0,0" Width="40"/>
+                    </Grid>
+                    <TextBlock Text="Sessions with drain rate above this will be flagged as Warning." Foreground="Gray" FontSize="11"/>
+                </StackPanel>
             </StackPanel>
 
             <!-- Whitelist -->
             <StackPanel Spacing="10">
-                <TextBlock Text="Process Whitelist" Style="{ThemeResource SubtitleTextBlockStyle}"/>
+                <TextBlock Text="{StaticResource WhitelistHeader}" Style="{ThemeResource SubtitleTextBlockStyle}"/>
                 <TextBlock Text="Processes in this list will NOT be killed." Foreground="Gray" FontSize="12"/>
                 
                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -48,7 +61,7 @@
 
             <!-- About & Updates -->
             <StackPanel Spacing="10">
-                <TextBlock Text="About &amp; Updates" Style="{ThemeResource SubtitleTextBlockStyle}"/>
+                <TextBlock Text="{StaticResource AboutHeader}" Style="{ThemeResource SubtitleTextBlockStyle}"/>
                 <StackPanel Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
                     <TextBlock Text="Current Version:" VerticalAlignment="Center"/>
                     <TextBlock Text="{Binding CurrentVersion}" FontWeight="Bold" VerticalAlignment="Center"/>
@@ -64,7 +77,11 @@
             </StackPanel>
 
             <!-- Actions -->
-            <Button Command="{Binding SaveSettingsCommand}" Content="Save Configuration" HorizontalAlignment="Right"/>
+            <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+                <Button Command="{Binding OpenLogsFolderCommand}" Content="{StaticResource ButtonOpenLogs}" />
+                <Button Command="{Binding ClearHistoryCommand}" Content="{StaticResource ButtonClearHistory}" Foreground="Red" />
+                <Button Command="{Binding SaveSettingsCommand}" Content="Save" Style="{StaticResource AccentButtonStyle}"/>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Page>

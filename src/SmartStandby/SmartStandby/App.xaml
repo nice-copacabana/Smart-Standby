@@ -13,6 +13,8 @@
             <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
             <converters:StringVisibilityConverter x:Key="StringVisibilityConverter"/>
+            <converters:DrainRateColorConverter x:Key="DrainRateColorConverter"/>
+            <converters:InverseVisibilityConverter x:Key="InverseVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

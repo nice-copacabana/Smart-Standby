@@ -39,13 +39,13 @@ namespace SmartStandby
 
         private SmartStandby.Services.TrayIconService _trayService;
         private IntPtr _oldWndProc = IntPtr.Zero;
-        private Win32Native.WndProc? _newWndProc;
+        private Win32Utils.WndProc? _newWndProc;
 
         private void InterceptMessages()
         {
             IntPtr hwnd = WindowNative.GetWindowHandle(this);
-            _newWndProc = new Win32Native.WndProc(NewWindowProc);
-            _oldWndProc = Win32Native.SetWindowLongPtr(hwnd, Win32Native.GWL_WNDPROC, Marshal.GetFunctionPointerForDelegate(_newWndProc));
+            _newWndProc = new Win32Utils.WndProc(NewWindowProc);
+            _oldWndProc = Win32Utils.SetWindowLongPtr(hwnd, Win32Utils.GWL_WNDPROC, Marshal.GetFunctionPointerForDelegate(_newWndProc));
         }
 
         private IntPtr NewWindowProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
@@ -62,7 +62,7 @@ namespace SmartStandby
                     ShowTrayMenu();
                 }
             }
-            return Win32Native.CallWindowProc(_oldWndProc, hWnd, msg, wParam, lParam);
+            return Win32Utils.CallWindowProc(_oldWndProc, hWnd, msg, wParam, lParam);
         }
 
         private void RestoreWindow()
@@ -79,20 +79,20 @@ namespace SmartStandby
         private void ShowTrayMenu()
         {
             IntPtr hwnd = WindowNative.GetWindowHandle(this);
-            IntPtr hMenu = Win32Native.CreatePopupMenu();
+            IntPtr hMenu = Win32Utils.CreatePopupMenu();
             
-            Win32Native.AppendMenu(hMenu, Win32Native.MF_STRING, Win32Native.ID_TRAY_OPEN, "Open Smart Standby");
-            Win32Native.AppendMenu(hMenu, Win32Native.MF_STRING, Win32Native.ID_TRAY_SLEEP, "Sleep Now");
-            Win32Native.AppendMenu(hMenu, Win32Native.MF_STRING, 0, "-"); // Separator
-            Win32Native.AppendMenu(hMenu, Win32Native.MF_STRING, Win32Native.ID_TRAY_EXIT, "Exit");
+            Win32Utils.AppendMenu(hMenu, Win32Utils.MF_STRING, Win32Utils.ID_TRAY_OPEN, "Open Smart Standby");
+            Win32Utils.AppendMenu(hMenu, Win32Utils.MF_STRING, Win32Utils.ID_TRAY_SLEEP, "Sleep Now");
+            Win32Utils.AppendMenu(hMenu, Win32Utils.MF_STRING, 0, "-"); // Separator
+            Win32Utils.AppendMenu(hMenu, Win32Utils.MF_STRING, Win32Utils.ID_TRAY_EXIT, "Exit");
 
-            Win32Native.POINT pt;
-            Win32Native.GetCursorPos(out pt);
+            Win32Utils.POINT pt;
+            Win32Utils.GetCursorPos(out pt);
 
             // TrackPopupMenu with TPM_RETURNCMD returns the ID of the selected item
-            Win32Native.SetForegroundWindow(hwnd);
-            uint command = (uint)Win32Native.TrackPopupMenu(hMenu, Win32Native.TPM_LEFTALIGN | Win32Native.TPM_RETURNCMD, pt.X, pt.Y, 0, hwnd, IntPtr.Zero);
-            Win32Native.DestroyMenu(hMenu);
+            Win32Utils.SetForegroundWindow(hwnd);
+            uint command = (uint)Win32Utils.TrackPopupMenu(hMenu, Win32Utils.TPM_LEFTALIGN | Win32Utils.TPM_RETURNCMD, pt.X, pt.Y, 0, hwnd, IntPtr.Zero);
+            Win32Utils.DestroyMenu(hMenu);
 
             HandleTrayCommand(command);
         }
@@ -101,14 +101,14 @@ namespace SmartStandby
         {
             switch (commandId)
             {
-                case Win32Native.ID_TRAY_OPEN:
+                case Win32Utils.ID_TRAY_OPEN:
                     RestoreWindow();
                     break;
-                case Win32Native.ID_TRAY_SLEEP:
+                case Win32Utils.ID_TRAY_SLEEP:
                     var sleepService = ((App)App.Current).Host.Services.GetRequiredService<SleepService>();
                     await sleepService.ExecuteSmartSleepAsync(force: true);
                     break;
-                case Win32Native.ID_TRAY_EXIT:
+                case Win32Utils.ID_TRAY_EXIT:
                     Application.Current.Exit();
                     break;
             }
