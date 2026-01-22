@@ -18,7 +18,12 @@ public class TrayIconService : IDisposable
     private const uint NIF_ICON = 0x00000002;
     private const uint NIF_TIP = 0x00000004;
     private const uint WM_USER = 0x0400;
-    private const uint WM_TRAYICON = WM_USER + 1;
+    public const uint WM_TRAYICON = WM_USER + 1;
+
+    public const uint WM_LBUTTONDBLCLK = 0x0203;
+    public const uint WM_RBUTTONUP = 0x0205;
+    
+    private const uint NIF_INFO = 0x00000010;
 
     // Structs for Shell_NotifyIcon
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
@@ -74,6 +79,20 @@ public class TrayIconService : IDisposable
         nid.hIcon = LoadImage(IntPtr.Zero, "#32512", 1, 16, 16, 0x00008000); // IDI_APPLICATION
 
         Shell_NotifyIcon(NIM_ADD, ref nid);
+    }
+
+    public void ShowNotification(string title, string message)
+    {
+        var nid = new NOTIFYICONDATA();
+        nid.cbSize = Marshal.SizeOf(nid);
+        nid.hWnd = _hwnd;
+        nid.uID = _id;
+        nid.uFlags = NIF_INFO;
+        nid.szInfoTitle = title;
+        nid.szInfo = message;
+        nid.dwInfoFlags = 0x01; // NIIF_INFO
+
+        Shell_NotifyIcon(NIM_MODIFY, ref nid);
     }
 
     public void Dispose()

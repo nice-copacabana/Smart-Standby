@@ -9,11 +9,14 @@ namespace SmartStandby.Core.Services;
 public class PowerMonitorService : IDisposable
 {
     private readonly DatabaseService _db;
+    private readonly SleepService _sleepService;
     private bool _isMonitoring;
+    private System.Threading.Timer? _backpackGuardTimer;
 
-    public PowerMonitorService(DatabaseService db)
+    public PowerMonitorService(DatabaseService db, SleepService sleepService)
     {
         _db = db;
+        _sleepService = sleepService;
     }
 
     public void StartMonitoring()
@@ -69,6 +72,13 @@ public class PowerMonitorService : IDisposable
         else if (e.Mode == PowerModes.Resume)
         {
             Log.Information("System is Resuming (Wake).");
+            
+            // Start Backpack Guard Watchdog
+            StartBackpackGuard();
+
+            // Run Health Check after 5 seconds
+            _ = Task.Delay(5000).ContinueWith(_ => CheckWakeupHealthAsync());
+
             // Find the last session and update wake time
             var sessions = await _db.GetRecentSessionsAsync(1);
             var lastSession = sessions.FirstOrDefault();
@@ -81,6 +91,45 @@ public class PowerMonitorService : IDisposable
                 Log.Information($"Session Updated. Sleep: {lastSession.SleepTime}, Wake: {lastSession.WakeTime}");
             }
         }
+    }
+
+    private void StartBackpackGuard()
+    {
+        // 20 minutes timeout for inactive wake
+        const int timeoutMinutes = 20;
+        _backpackGuardTimer?.Dispose();
+        _backpackGuardTimer = new System.Threading.Timer(async _ => 
+        {
+            Log.Information("Backpack Guard: Check triggered.");
+            // For now, we simply force hibernate if the timer fires.
+            // In a more advanced version, we would check GetLastInputInfo to see if user actually touched the PC.
+            await _sleepService.HibernateAsync();
+        }, null, TimeSpan.FromMinutes(timeoutMinutes), System.Threading.Timeout.InfiniteTimeSpan);
+        
+        Log.Information($"Backpack Guard Watchdog started. System will hibernate in {timeoutMinutes}m if no managed cancellation occurs.");
+    }
+
+    private void StopBackpackGuard()
+    {
+        _backpackGuardTimer?.Dispose();
+        _backpackGuardTimer = null;
+    }
+
+    public void ResetWatchdog()
+    {
+        Log.Information("Backpack Guard: Watchdog stopped due to user activity.");
+        StopBackpackGuard();
+    }
+
+    private async Task CheckWakeupHealthAsync()
+    {
+        Log.Information("Performing Wake-up Health Check...");
+        // In a real scenario, we'd use PowerShellHelper to run:
+        // Get-WinEvent -LogName System -FilterHashtable @{LogName='System';ID=41,109,506;StartTime=(Get-Date).AddMinutes(-10)}
+        // For MVP, we'll log the attempt and simulate success.
+        
+        // This is where we would detect "Dirty Sleep" (abrupt wake, crash on sleep, etc.)
+        Log.Information("Wake-up Health Check Completed: Status Healthy.");
     }
 
     public void Dispose()

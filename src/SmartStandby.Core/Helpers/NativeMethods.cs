@@ -20,4 +20,6 @@ public static class NativeMethods
         // DisableWakeEvent=false allows wake timers/events to wake the PC.
         return SetSuspendState(hibernate, false, false);
     }
+
+    public static bool TriggerHibernate() => SetSuspendState(true, false, false);
 }

@@ -4,6 +4,12 @@ using SmartStandby.ViewModels;
 using SmartStandby.Views;
 using WinRT.Interop;
 using System;
+using System.Runtime.InteropServices;
+using SmartStandby.Services;
+using Microsoft.UI.Windowing;
+using Microsoft.UI;
+using SmartStandby.Core.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SmartStandby
 {
@@ -27,9 +33,62 @@ namespace SmartStandby
             // Navigate to Dashboard initially
             ContentFrame.Navigate(typeof(DashboardPage));
             NavView.SelectedItem = NavView.MenuItems[0];
+
+            InterceptMessages();
         }
 
-        private SmartStandby.Services.TrayIconService _trayService; 
+        private SmartStandby.Services.TrayIconService _trayService;
+        private IntPtr _oldWndProc = IntPtr.Zero;
+        private Win32Native.WndProc? _newWndProc;
+
+        private void InterceptMessages()
+        {
+            IntPtr hwnd = WindowNative.GetWindowHandle(this);
+            _newWndProc = new Win32Native.WndProc(NewWindowProc);
+            _oldWndProc = Win32Native.SetWindowLongPtr(hwnd, Win32Native.GWL_WNDPROC, Marshal.GetFunctionPointerForDelegate(_newWndProc));
+        }
+
+        private IntPtr NewWindowProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+        {
+            if (msg == TrayIconService.WM_TRAYICON)
+            {
+                uint trayMsg = (uint)(lParam.ToInt64() & 0xFFFF);
+                if (trayMsg == TrayIconService.WM_LBUTTONDBLCLK)
+                {
+                    RestoreWindow();
+                }
+                else if (trayMsg == TrayIconService.WM_RBUTTONUP)
+                {
+                    ShowTrayMenu();
+                }
+            }
+            return Win32Native.CallWindowProc(_oldWndProc, hWnd, msg, wParam, lParam);
+        }
+
+        private void RestoreWindow()
+        {
+            this.Activate();
+            var appWindow = GetAppWindow();
+            appWindow.Show();
+
+            // Stop Backpack Guard if it was running
+            var powerMonitor = ((App)App.Current).Host.Services.GetRequiredService<PowerMonitorService>();
+            powerMonitor.ResetWatchdog();
+        }
+
+        private void ShowTrayMenu()
+        {
+            // Simplified for now: just restore or sleep
+            // In a real app we'd use TrackPopupMenu
+            RestoreWindow();
+        }
+
+        private AppWindow GetAppWindow()
+        {
+            IntPtr hwnd = WindowNative.GetWindowHandle(this);
+            WindowId windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
+            return AppWindow.GetFromWindowId(windowId);
+        }
 
         private void MainWindow_Closed(object sender, WindowEventArgs args)
         {

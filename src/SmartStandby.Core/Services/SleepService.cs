@@ -90,6 +90,12 @@ public class SleepService
         return true;
     }
 
+    public async Task HibernateAsync()
+    {
+        Log.Information("Backpack Guard: Triggering forced Hibernation due to inactivity after wake.");
+        NativeMethods.TriggerHibernate();
+    }
+
     public async Task WakeUpAsync()
     {
         Log.Information("System Waking Up. Restoring services...");
