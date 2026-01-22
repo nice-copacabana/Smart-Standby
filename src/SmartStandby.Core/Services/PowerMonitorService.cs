@@ -147,17 +147,32 @@ public class PowerMonitorService : IDisposable
                 if (errorCount > 0)
                 {
                     Log.Warning($"Wake-up Health Check: Detected {errorCount} critical power events/errors in recent logs.");
-                    // Mark last session as 'Dirty' if we had a persistent DB field for it.
+                    await SaveHealthStatusAsync("Warning", $"Detected {errorCount} critical power events/errors.");
                 }
                 else
                 {
                     Log.Information("Wake-up Health Check Completed: Status Healthy (No recent critical power events).");
+                    await SaveHealthStatusAsync("Healthy", "No recent critical power events detected.");
                 }
             }
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Failed to perform real wake-up health check.");
+            await SaveHealthStatusAsync("Error", "Failed to perform health check.");
+        }
+    }
+
+    private async Task SaveHealthStatusAsync(string status, string message)
+    {
+        var sessions = await _db.GetRecentSessionsAsync(1);
+        var lastSession = sessions.FirstOrDefault();
+        if (lastSession != null)
+        {
+            lastSession.HealthStatus = status;
+            lastSession.HealthMessage = message;
+            await _db.UpdateSessionAsync(lastSession);
+            Log.Information($"Health Status persisted to session {lastSession.Id}.");
         }
     }
 

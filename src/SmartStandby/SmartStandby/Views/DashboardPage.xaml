@@ -12,7 +12,8 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/> 
+            <RowDefinition Height="200"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -69,14 +70,40 @@
             </ItemsControl>
         </Grid>
 
+        <!-- Session History -->
+        <TextBlock Text="Recent Sessions" Grid.Row="3" Margin="24,0,24,10" Style="{StaticResource SubtitleTextBlockStyle}"/>
+        <ListView Grid.Row="4" Margin="24,0,24,24" ItemsSource="{Binding RecentSessions}" 
+                  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="8">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <SymbolIcon Symbol="Clock" Margin="0,0,16,0" Foreground="{ThemeResource SystemAccentColor}" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding SleepTime, StringFormat='{}{0:MM/dd HH:mm}'}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding HealthMessage}" FontSize="12" Opacity="0.7"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding DurationMinutes, StringFormat='{}{0:F1} min'}" HorizontalAlignment="Right" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding BatteryStart, StringFormat='{}Batt: {0}%'}" HorizontalAlignment="Right" FontSize="12" Opacity="0.7"/>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
         <!-- Footer -->
-        <StackPanel Grid.Row="4" Margin="24,12,24,24" Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+        <StackPanel Grid.Row="5" Margin="24,12,24,24" Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
             <Button Command="{Binding RefreshBlockersCommand}" Content="Refresh Blockers" Width="120" Height="40"/>
             <Button Command="{Binding SmartSleepCommand}" Content="SMART SLEEP" Style="{StaticResource AccentButtonStyle}" Width="160" Height="40" Background="#FF0078D7" Foreground="White" FontSize="16" FontWeight="SemiBold"/>
         </StackPanel>
         
         <!-- Loading Overlay -->
-        <Grid Grid.RowSpan="3" Background="#88000000" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
+        <Grid Grid.RowSpan="6" Background="#88000000" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
             <ProgressRing IsActive="True" Width="64" Height="64" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Grid>
     </Grid>

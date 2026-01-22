@@ -35,6 +35,8 @@ public partial class DashboardViewModel : ObservableObject
     
     public ObservableCollection<ChartDataPoint> ChartData { get; } = new();
 
+    public ObservableCollection<SleepSession> RecentSessions { get; } = new();
+
     public DashboardViewModel(BlockerScanner scanner, SleepService sleepService, DatabaseService db)
     {
         _scanner = scanner;
@@ -47,11 +49,21 @@ public partial class DashboardViewModel : ObservableObject
 
     private async Task RefreshHealthAsync()
     {
-        // For MVP, we'll pull from the logs or a transient state in the future.
-        // Currently, we just set a healthy default until a real failure is recorded.
-        HealthStatus = "Healthy";
-        HealthMessage = "System wake-up diagnostics passed successfully.";
-        HealthColor = "Green";
+        var sessions = await _db.GetRecentSessionsAsync(1);
+        var lastSession = sessions.FirstOrDefault();
+
+        if (lastSession != null && !string.IsNullOrEmpty(lastSession.HealthStatus))
+        {
+            HealthStatus = lastSession.HealthStatus;
+            HealthMessage = lastSession.HealthMessage;
+            HealthColor = HealthStatus == "Healthy" ? "Green" : (HealthStatus == "Warning" ? "Orange" : "Red");
+        }
+        else
+        {
+            HealthStatus = "Unknown";
+            HealthMessage = "Awaiting first sleep/wake diagnostic.";
+            HealthColor = "Gray";
+        }
     }
 
     private async Task LoadChartDataAsync()
@@ -60,6 +72,12 @@ public partial class DashboardViewModel : ObservableObject
         {
             var sevenDaysAgo = DateTime.Now.Date.AddDays(-6);
             var sessions = await _db.GetSessionsAfterAsync(sevenDaysAgo);
+
+            RecentSessions.Clear();
+            foreach (var s in sessions.OrderByDescending(x => x.SleepTime))
+            {
+                RecentSessions.Add(s);
+            }
 
             var grouped = sessions.GroupBy(s => s.SleepTime.Date)
                                   .ToDictionary(g => g.Key, g => g.Sum(s => s.DurationMinutes) / 60.0);

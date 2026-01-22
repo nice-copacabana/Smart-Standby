@@ -32,14 +32,24 @@ public class SleepService
         if (blockers.Any())
         {
             Log.Information($"Detected {blockers.Count} blockers.");
+            
+            // Fetch Whitelist
+            var whitelist = await _db.GetWhitelistAsync();
+            var whitelistSet = new HashSet<string>(whitelist, StringComparison.OrdinalIgnoreCase);
+
             foreach (var b in blockers)
             {
                 Log.Information($"Blocker: {b.Name} [{b.Type}]");
 
                 // Logic: If force is enabled, try to kill blocking processes
-                // We only target specific types usually, generally 'Execution' or 'Display' requests from apps.
                 if (force && !string.IsNullOrWhiteSpace(b.Name) && b.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                 {
+                    if (whitelistSet.Contains(b.Name))
+                    {
+                        Log.Information($"Skipping whitelist process: {b.Name}");
+                        continue;
+                    }
+
                     Log.Information($"Force mode enabled. Attempting to kill blocker: {b.Name}");
                     await _guardian.KillProcessAsync(b.Name); 
                 }
