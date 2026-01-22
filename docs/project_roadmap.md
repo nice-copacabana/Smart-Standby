@@ -47,6 +47,23 @@
   - [x] 使用 MSIX 或 单文件发布工具打包 (部署环境已验证)。
   - [x] **发布 v1.0 beta**。
 
+## 持续优化 (Continuous Improvement)
+- [x] **Round 5: 电池智能 (Battery Intelligence)**
+  - [x] 耗电率分析 (Drain Rate Analytics)
+  - [x] 健康阈值警告 (Health Threshold)
+  - [x] Win32 API 统一重构
+
+- [x] **Round 6: 体验与分发 (UX & Distribution)**
+  - [x] 中英双语 UI (Bilingual Support)
+  - [x] 数据维护 (History Cleanup)
+  - [x] 空状态设计 (Empty State)
+  - [x] 发布指南 (Publish Guide)
+
+- [x] **Round 7: 智能触发 (Smart Triggers)**
+  - [x] 低电量强制休眠 (Low Battery Trigger)
+  - [x] 定时睡眠 (Scheduled Sleep)
+  - [x] 自动化设置面板 (Automation Settings)
+
 ## AI 开发策略提示
 *   **Prompt 技巧**：遇到复杂逻辑（如正则解析），直接把 `powercfg` 的输出样本贴给 AI，让它生成解析代码。
 *   **UI 生成**：描述布局（"左侧导航栏，右侧上方是Dashboard卡片，下方是DataGrid"），让 AI 生成 XAML。
