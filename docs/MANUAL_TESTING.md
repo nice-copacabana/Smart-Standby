@@ -65,6 +65,19 @@ Follow these steps to verify the newly implemented features in Round 1-3.
     - Click **"Open Logs Folder"**.
     - **Expected**: Windows Explorer should open to the `logs` directory within the application folder.
 
+## 8. Round 7 Enhancements (Automation)
+- [ ] **TC-17: Low Battery Trigger (Simulation)**
+    - Go to Settings -> Automation.
+    - Enable "Low Battery Force Sleep". Set threshold to a value higher than current battery (if unplugged) OR mock logic.
+    - *Note*: For real test, set to e.g. 50% and unplug power while battery is 40%.
+    - **Expected**: Notification "Low Battery (40%). Entering Smart Sleep..." appears, followed by system sleep.
+- [ ] **TC-18: Scheduled Sleep**
+    - Go to Settings -> Automation.
+    - Enable "Scheduled Sleep".
+    - Set time to 1 minute from now.
+    - Wait.
+    - **Expected**: At the target time, Notification "Scheduled Sleep time reached..." appears, followed by system sleep.
+
 ## 5. Round 4 Enhancements (Persistence & Safety)
 - [ ] **TC-08: Health Status Persistence**
     - Ensure a "Wake Health" status is visible on the Dashboard (e.g., from TC-06).

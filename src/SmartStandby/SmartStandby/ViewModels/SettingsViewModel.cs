@@ -44,6 +44,22 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnBatteryDrainThresholdChanged(double value) => SaveSettingsCommand.Execute(null);
 
     [ObservableProperty]
+    public partial bool EnableLowBatteryTrigger { get; set; } = false;
+    partial void OnEnableLowBatteryTriggerChanged(bool value) => SaveSettingsCommand.Execute(null);
+
+    [ObservableProperty]
+    public partial int LowBatteryThreshold { get; set; } = 20;
+    partial void OnLowBatteryThresholdChanged(int value) => SaveSettingsCommand.Execute(null);
+
+    [ObservableProperty]
+    public partial bool EnableScheduledSleep { get; set; } = false;
+    partial void OnEnableScheduledSleepChanged(bool value) => SaveSettingsCommand.Execute(null);
+
+    [ObservableProperty]
+    public partial TimeSpan ScheduledSleepTime { get; set; } = new TimeSpan(23, 0, 0);
+    partial void OnScheduledSleepTimeChanged(TimeSpan value) => SaveSettingsCommand.Execute(null);
+
+    [ObservableProperty]
     public partial string NewProcessName { get; set; } = string.Empty;
 
     public ObservableCollection<string> WhitelistProcesses { get; } = new();
@@ -97,6 +113,18 @@ public partial class SettingsViewModel : ObservableObject
         string thresholdStr = await _databaseService.GetConfigAsync("BatteryDrainThreshold", "3.0");
         if (double.TryParse(thresholdStr, out double threshold))
             BatteryDrainThreshold = threshold;
+
+        EnableLowBatteryTrigger = await _databaseService.GetConfigBoolAsync("EnableLowBatteryTrigger", false);
+        
+        string lowBattStr = await _databaseService.GetConfigAsync("LowBatteryThreshold", "20");
+        if (int.TryParse(lowBattStr, out int lowBatt))
+            LowBatteryThreshold = lowBatt;
+
+        EnableScheduledSleep = await _databaseService.GetConfigBoolAsync("EnableScheduledSleep", false);
+
+        string scheduleStr = await _databaseService.GetConfigAsync("ScheduledSleepTime", "23:00:00");
+        if (TimeSpan.TryParse(scheduleStr, out TimeSpan time))
+            ScheduledSleepTime = time;
 
         var list = await _databaseService.GetWhitelistAsync();
         WhitelistProcesses.Clear();
@@ -168,6 +196,11 @@ public partial class SettingsViewModel : ObservableObject
         await _databaseService.SetConfigBoolAsync("EnableTdrPatch", EnableTdrPatch);
         await _databaseService.SetConfigBoolAsync("EnableRunOnStartup", EnableRunOnStartup);
         await _databaseService.SetConfigAsync("BatteryDrainThreshold", BatteryDrainThreshold.ToString("F1"));
+        
+        await _databaseService.SetConfigBoolAsync("EnableLowBatteryTrigger", EnableLowBatteryTrigger);
+        await _databaseService.SetConfigAsync("LowBatteryThreshold", LowBatteryThreshold.ToString());
+        await _databaseService.SetConfigBoolAsync("EnableScheduledSleep", EnableScheduledSleep);
+        await _databaseService.SetConfigAsync("ScheduledSleepTime", ScheduledSleepTime.ToString());
         
         // Apply System Tweaks immediately
         _tweaker.ApplyTdrPatch(EnableTdrPatch);

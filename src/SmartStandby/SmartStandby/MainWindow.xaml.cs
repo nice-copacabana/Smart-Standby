@@ -16,11 +16,15 @@ namespace SmartStandby
     public sealed partial class MainWindow : Window
     {
         public MainWindowViewModel ViewModel { get; }
+        private readonly PowerMonitorService _powerMonitor;
 
-        public MainWindow()
+        public MainWindow(PowerMonitorService powerMonitor)
         {
             this.InitializeComponent();
             
+            _powerMonitor = powerMonitor;
+            _powerMonitor.NotificationRequested += (s, msg) => _trayService.ShowNotification("Smart Standby Automation", msg);
+
             ViewModel = new MainWindowViewModel();
             ViewModel.Initialize(this);
             

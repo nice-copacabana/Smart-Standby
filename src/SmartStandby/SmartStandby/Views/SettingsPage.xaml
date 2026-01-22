@@ -76,6 +76,32 @@
                         Margin="0,5,0,0"/>
             </StackPanel>
 
+            <!-- Automation -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="{StaticResource AutomationHeader}" Style="{ThemeResource SubtitleTextBlockStyle}"/>
+                
+                <!-- Low Battery -->
+                <ToggleSwitch Header="{StaticResource ConfigLowBattery}" IsOn="{Binding EnableLowBatteryTrigger}" OnContent="Enabled" OffContent="Disabled"/>
+                <StackPanel Spacing="4" Margin="0,0,0,10" Visibility="{Binding EnableLowBatteryTrigger, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{StaticResource ConfigLowBatteryThreshold}" Style="{ThemeResource BodyTextBlockStyle}"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Slider Minimum="5" Maximum="50" StepFrequency="5" Value="{Binding LowBatteryThreshold, Mode=TwoWay}"/>
+                        <TextBlock Grid.Column="1" Text="{Binding LowBatteryThreshold, StringFormat='{}{0}%'}" VerticalAlignment="Center" Margin="12,0,0,0" Width="40"/>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Scheduled Sleep -->
+                <ToggleSwitch Header="{StaticResource ConfigScheduledSleep}" IsOn="{Binding EnableScheduledSleep}" OnContent="Enabled" OffContent="Disabled"/>
+                <StackPanel Spacing="4" Visibility="{Binding EnableScheduledSleep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{StaticResource ConfigScheduledTime}" Style="{ThemeResource BodyTextBlockStyle}"/>
+                    <TimePicker Time="{Binding ScheduledSleepTime, Mode=TwoWay}" ClockIdentifier="24HourClock"/>
+                </StackPanel>
+            </StackPanel>
+
             <!-- Actions -->
             <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
                 <Button Command="{Binding OpenLogsFolderCommand}" Content="{StaticResource ButtonOpenLogs}" />

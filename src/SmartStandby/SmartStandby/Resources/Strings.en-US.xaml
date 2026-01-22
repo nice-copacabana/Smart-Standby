@@ -26,4 +26,11 @@
     <system:String x:Key="ButtonClearHistory">Clear Session History</system:String>
     <system:String x:Key="ButtonOpenLogs">Open Logs Folder</system:String>
     <system:String x:Key="AboutHeader">About &amp; Updates</system:String>
+
+    <!-- Automation -->
+    <system:String x:Key="AutomationHeader">Automation (Smart Triggers)</system:String>
+    <system:String x:Key="ConfigLowBattery">Low Battery Force Sleep</system:String>
+    <system:String x:Key="ConfigLowBatteryThreshold">Trigger Threshold (%)</system:String>
+    <system:String x:Key="ConfigScheduledSleep">Scheduled Sleep</system:String>
+    <system:String x:Key="ConfigScheduledTime">Sleep Time</system:String>
 </ResourceDictionary>

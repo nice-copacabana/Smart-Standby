@@ -1,6 +1,7 @@
 using Microsoft.Win32;
 using Serilog;
 using SmartStandby.Core.Models;
+using SmartStandby.Core.Helpers;
 using System.Runtime.Versioning;
 
 namespace SmartStandby.Core.Services;
@@ -13,6 +14,9 @@ public class PowerMonitorService : IDisposable
     private readonly PowerShellHelper _ps;
     private bool _isMonitoring;
     private System.Threading.Timer? _backpackGuardTimer;
+    private System.Threading.Timer? _automationTimer;
+    
+    public event EventHandler<string>? NotificationRequested;
 
     public PowerMonitorService(DatabaseService db, SleepService sleepService, PowerShellHelper ps)
     {
@@ -29,6 +33,10 @@ public class PowerMonitorService : IDisposable
         {
             SystemEvents.PowerModeChanged += OnPowerModeChanged;
             _isMonitoring = true;
+            
+            // Start Automation Timer (every 1 minute)
+            _automationTimer = new System.Threading.Timer(async _ => await CheckAutomationRules(), null, TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(1));
+
             Log.Information("Power Monitoring Started. Listening for Sleep/Wake events.");
         }
         catch (Exception ex)
@@ -42,6 +50,7 @@ public class PowerMonitorService : IDisposable
         if (!_isMonitoring) return;
 
         SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+        _automationTimer?.Dispose();
         _isMonitoring = false;
         Log.Information("Power Monitoring Stopped.");
     }
@@ -192,5 +201,57 @@ public class PowerMonitorService : IDisposable
     public void Dispose()
     {
         StopMonitoring();
+    }
+
+    private async Task CheckAutomationRules()
+    {
+        try
+        {
+            // check power status
+            var powerStatus = Win32Utils.GetSystemPowerStatus();
+            bool isCharging = powerStatus.ACLineStatus == 1;
+            int batteryPercent = powerStatus.BatteryLifePercent;
+
+            // 1. Low Battery Trigger
+            bool enableLowBatt = await _db.GetConfigBoolAsync("EnableLowBatteryTrigger", false);
+            if (enableLowBatt && !isCharging && batteryPercent > 0)
+            {
+                string thresholdStr = await _db.GetConfigAsync("LowBatteryThreshold", "20");
+                if (int.TryParse(thresholdStr, out int threshold) && batteryPercent <= threshold)
+                {
+                    Log.Warning($"Automation Access: Low Battery detected ({batteryPercent}% <= {threshold}%). Triggering sleep.");
+                    NotificationRequested?.Invoke(this, $"Low Battery ({batteryPercent}%). Entering Smart Sleep...");
+                    await Task.Delay(3000); // Give user a moment to see notification
+                    await _sleepService.SmartSleepAsync();
+                    return;
+                }
+            }
+
+            // 2. Scheduled Sleep
+            bool enableSchedule = await _db.GetConfigBoolAsync("EnableScheduledSleep", false);
+            if (enableSchedule)
+            {
+                string timeStr = await _db.GetConfigAsync("ScheduledSleepTime", "23:00:00");
+                if (TimeSpan.TryParse(timeStr, out TimeSpan scheduleTime))
+                {
+                    var now = DateTime.Now.TimeOfDay;
+                    // Trigger if within the same minute
+                    if (now >= scheduleTime && now < scheduleTime.Add(TimeSpan.FromMinutes(1)))
+                    {
+                         Log.Information($"Automation Access: Scheduled time reached ({scheduleTime}). Triggering sleep.");
+                         NotificationRequested?.Invoke(this, "Scheduled Sleep time reached. Entering Smart Sleep...");
+                         await Task.Delay(3000);
+                         await _sleepService.SmartSleepAsync();
+                         
+                         // Pause timer briefly to avoid double trigger in same minute? 
+                         // Actually the sleep will suspend the system, so next tick will be after wake.
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error in Automation Check.");
+        }
     }
 }
