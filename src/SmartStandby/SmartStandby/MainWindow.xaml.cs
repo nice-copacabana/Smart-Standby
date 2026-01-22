@@ -78,9 +78,40 @@ namespace SmartStandby
 
         private void ShowTrayMenu()
         {
-            // Simplified for now: just restore or sleep
-            // In a real app we'd use TrackPopupMenu
-            RestoreWindow();
+            IntPtr hwnd = WindowNative.GetWindowHandle(this);
+            IntPtr hMenu = Win32Native.CreatePopupMenu();
+            
+            Win32Native.AppendMenu(hMenu, Win32Native.MF_STRING, Win32Native.ID_TRAY_OPEN, "Open Smart Standby");
+            Win32Native.AppendMenu(hMenu, Win32Native.MF_STRING, Win32Native.ID_TRAY_SLEEP, "Sleep Now");
+            Win32Native.AppendMenu(hMenu, Win32Native.MF_STRING, 0, "-"); // Separator
+            Win32Native.AppendMenu(hMenu, Win32Native.MF_STRING, Win32Native.ID_TRAY_EXIT, "Exit");
+
+            Win32Native.POINT pt;
+            Win32Native.GetCursorPos(out pt);
+
+            // TrackPopupMenu with TPM_RETURNCMD returns the ID of the selected item
+            Win32Native.SetForegroundWindow(hwnd);
+            uint command = (uint)Win32Native.TrackPopupMenu(hMenu, Win32Native.TPM_LEFTALIGN | Win32Native.TPM_RETURNCMD, pt.X, pt.Y, 0, hwnd, IntPtr.Zero);
+            Win32Native.DestroyMenu(hMenu);
+
+            HandleTrayCommand(command);
+        }
+
+        private async void HandleTrayCommand(uint commandId)
+        {
+            switch (commandId)
+            {
+                case Win32Native.ID_TRAY_OPEN:
+                    RestoreWindow();
+                    break;
+                case Win32Native.ID_TRAY_SLEEP:
+                    var sleepService = ((App)App.Current).Host.Services.GetRequiredService<SleepService>();
+                    await sleepService.ExecuteSmartSleepAsync(force: true);
+                    break;
+                case Win32Native.ID_TRAY_EXIT:
+                    Application.Current.Exit();
+                    break;
+            }
         }
 
         private AppWindow GetAppWindow()

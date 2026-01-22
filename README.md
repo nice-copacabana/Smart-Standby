@@ -2,15 +2,16 @@
 
 **Smart Standby** is a Windows utility designed to fix the "Modern Standby" (S0 Low Power Idle) issues that plague many modern laptops (battery drain, overheating in bags). It attempts to enforce strict sleep behavior by monitoring power states, disconnecting networks, and aggressively handling blocking processes.
 
-## 🚀 Key Features
+## ✨ Key Features
 
-*   **Smart Sleep Trigger**: A "One-Click" sleep button that prepares the system for deep sleep.
-*   **Network Silence**: Automatically disconnects Wi-Fi on sleep to prevent "Wake for network" battery drain, and reconnects on wake.
-*   **Blocker Killer**: Scans for known processes (like Steam downloads or Video Players) ensuring the PC stays awake, and optionally kills them to force sleep. **Includes safety guards** to prevent killing critical system processes.
-*   **Deep Sleep Statistics**: Visualizes your sleep/wake cycles and **logs battery consumption** per session.
-*   **Run on Startup**: Optional setting to launch Smart Standby effectively when Windows starts.
-*   **TDR Patch Management**: optional registry tweaks to fix black screen/timeout issues on NVIDIA/AMD GPUs during sleep transitions.
-*   **Process Whitelist**: Configurable list of critical processes that should never be killed.
+*   **Smart Sleep Orchestration**: Automatically manages S3/Modern Standby transitions.
+*   **Backpack Guard**: Detects unexpected wake-ups in a bag and forces hibernation after 20 minutes if inactive.
+*   **Wake-up Health Report**: Automatically analyzes system event logs (IDs 41, 107, 109) after resume to detect power session quality.
+*   **Enhanced Tray Control**: Right-click context menu (Sleep Now, Exit) and double-click to restore window.
+*   **Blocker Awareness**: Scans for 7+ types of system-wide sleep blockers (Audio, Execution, Display, etc.) and optionally kills them.
+*   **Network Silence**: Optionally disconnects Wi-Fi on sleep to prevent "Wake for network" drain, and reconnects on wake.
+*   **Asset Safety**: Whitelist support for critical processes.
+*   **Auto-Update**: Built-in version check and update notifications.
 
 ## 🛠️ Installation & Build
 

@@ -29,11 +29,15 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <StackPanel VerticalAlignment="Center">
+            <StackPanel VerticalAlignment="Center" Spacing="4">
                 <TextBlock Text="{Binding StatusMessage, Mode=OneWay}" Style="{StaticResource SubtitleTextBlockStyle}"/>
-                <TextBlock Text="Smart Standby is active" Style="{StaticResource CaptionTextBlockStyle}" Opacity="0.6"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Wake Health:" Style="{StaticResource CaptionTextBlockStyle}" Opacity="0.6"/>
+                    <TextBlock Text="{Binding HealthStatus}" Foreground="{Binding HealthColor}" FontWeight="Bold" FontSize="12"/>
+                </StackPanel>
+                <TextBlock Text="{Binding HealthMessage}" FontSize="12" Opacity="0.8" FontStyle="Italic"/>
             </StackPanel>
-            <Button Grid.Column="1" Content="Sleep Now" Style="{StaticResource AccentButtonStyle}" Command="{Binding SmartSleepCommand}" />
+            <Button Grid.Column="1" Content="Sleep Now" Style="{StaticResource AccentButtonStyle}" Command="{Binding SmartSleepCommand}" VerticalAlignment="Center" />
         </Grid>
 
         <!-- Chart -->

@@ -10,13 +10,15 @@ public class PowerMonitorService : IDisposable
 {
     private readonly DatabaseService _db;
     private readonly SleepService _sleepService;
+    private readonly PowerShellHelper _ps;
     private bool _isMonitoring;
     private System.Threading.Timer? _backpackGuardTimer;
 
-    public PowerMonitorService(DatabaseService db, SleepService sleepService)
+    public PowerMonitorService(DatabaseService db, SleepService sleepService, PowerShellHelper ps)
     {
         _db = db;
         _sleepService = sleepService;
+        _ps = ps;
     }
 
     public void StartMonitoring()
@@ -123,13 +125,40 @@ public class PowerMonitorService : IDisposable
 
     private async Task CheckWakeupHealthAsync()
     {
-        Log.Information("Performing Wake-up Health Check...");
-        // In a real scenario, we'd use PowerShellHelper to run:
-        // Get-WinEvent -LogName System -FilterHashtable @{LogName='System';ID=41,109,506;StartTime=(Get-Date).AddMinutes(-10)}
-        // For MVP, we'll log the attempt and simulate success.
+        Log.Information("Performing Wake-up Health Check... Querying Event Logs.");
         
-        // This is where we would detect "Dirty Sleep" (abrupt wake, crash on sleep, etc.)
-        Log.Information("Wake-up Health Check Completed: Status Healthy.");
+        // System Event IDs to check:
+        // 41: Kernel-Power (Unexpected shutdown)
+        // 107: Kernel-Power (System resume)
+        // 109: Kernel-Power (System shutdown triggered)
+        // 506: Kernel-Power (Modern Standby entering low power - helpful for S0 systems)
+        
+        string script = @"
+            $fiveMinutesAgo = (Get-Date).AddMinutes(-10)
+            $events = Get-WinEvent -FilterHashtable @{LogName='System'; ID=41, 109, 506; StartTime=$fiveMinutesAgo} -ErrorAction SilentlyContinue
+            if ($events) { $events.Count } else { 0 }
+        ";
+
+        try 
+        {
+            string result = await _ps.ExecuteScriptAsync(script);
+            if (int.TryParse(result.Trim(), out int errorCount))
+            {
+                if (errorCount > 0)
+                {
+                    Log.Warning($"Wake-up Health Check: Detected {errorCount} critical power events/errors in recent logs.");
+                    // Mark last session as 'Dirty' if we had a persistent DB field for it.
+                }
+                else
+                {
+                    Log.Information("Wake-up Health Check Completed: Status Healthy (No recent critical power events).");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to perform real wake-up health check.");
+        }
     }
 
     public void Dispose()
