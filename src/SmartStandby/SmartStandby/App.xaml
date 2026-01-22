@@ -11,6 +11,8 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
             <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+            <converters:StringVisibilityConverter x:Key="StringVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -10,6 +10,22 @@ public partial class SettingsViewModel : ObservableObject
 {
     private readonly DatabaseService _databaseService;
     private readonly SystemTweaker _tweaker;
+    private readonly UpdateService _updateService;
+
+    [ObservableProperty]
+    private string _currentVersion = "1.0.0";
+
+    [ObservableProperty]
+    private string? _latestVersion;
+
+    [ObservableProperty]
+    private bool _isUpdateAvailable;
+
+    [ObservableProperty]
+    private bool _isCheckingForUpdates;
+
+    [ObservableProperty]
+    private string _updateStatusText = string.Empty;
 
     [ObservableProperty]
     public partial bool EnableNetworkDisconnect { get; set; } = true;
@@ -28,10 +44,13 @@ public partial class SettingsViewModel : ObservableObject
 
     public ObservableCollection<string> WhitelistProcesses { get; } = new();
 
-    public SettingsViewModel(DatabaseService databaseService, SystemTweaker tweaker)
+    public SettingsViewModel(DatabaseService databaseService, SystemTweaker tweaker, UpdateService updateService)
     {
         _databaseService = databaseService;
         _tweaker = tweaker;
+        _updateService = updateService;
+        
+        CurrentVersion = _updateService.GetCurrentVersion();
         LoadSettings();
     }
 
@@ -67,6 +86,40 @@ public partial class SettingsViewModel : ObservableObject
         {
             await _databaseService.RemoveWhitelistAsync(name);
             WhitelistProcesses.Remove(name);
+        }
+    }
+
+    [RelayCommand]
+    private async Task CheckForUpdatesAsync()
+    {
+        if (IsCheckingForUpdates) return;
+
+        IsCheckingForUpdates = true;
+        UpdateStatusText = "Checking for updates...";
+        IsUpdateAvailable = false;
+
+        try
+        {
+            var (updateAvailable, latestVersion, downloadUrl) = await _updateService.CheckForUpdatesAsync();
+            
+            if (updateAvailable)
+            {
+                IsUpdateAvailable = true;
+                LatestVersion = latestVersion;
+                UpdateStatusText = $"New version available: {latestVersion}";
+            }
+            else
+            {
+                UpdateStatusText = "Your application is up to date.";
+            }
+        }
+        catch (Exception ex)
+        {
+            UpdateStatusText = $"Error checking for updates: {ex.Message}";
+        }
+        finally
+        {
+            IsCheckingForUpdates = false;
         }
     }
 

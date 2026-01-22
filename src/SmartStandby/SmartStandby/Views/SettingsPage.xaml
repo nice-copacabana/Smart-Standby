@@ -46,6 +46,23 @@
                 </ListView>
             </StackPanel>
 
+            <!-- About & Updates -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="About &amp; Updates" Style="{ThemeResource SubtitleTextBlockStyle}"/>
+                <StackPanel Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
+                    <TextBlock Text="Current Version:" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding CurrentVersion}" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <Button Command="{Binding CheckForUpdatesCommand}" Content="Check for Updates" IsEnabled="{Binding IsCheckingForUpdates, Converter={StaticResource InverseBooleanConverter}}" />
+                </StackPanel>
+                <TextBlock Text="{Binding UpdateStatusText}" FontSize="12" Foreground="Gray" Visibility="{Binding UpdateStatusText, Converter={StaticResource StringVisibilityConverter}}" />
+                
+                <Button Content="Download Latest Version" 
+                        Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        HorizontalAlignment="Left"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Margin="0,5,0,0"/>
+            </StackPanel>
+
             <!-- Actions -->
             <Button Command="{Binding SaveSettingsCommand}" Content="Save Configuration" HorizontalAlignment="Right"/>
         </StackPanel>
