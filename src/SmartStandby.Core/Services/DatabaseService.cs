@@ -74,6 +74,13 @@ public class DatabaseService
         return config?.Value;
     }
 
+    public async Task<string> GetConfigAsync(string key, string defaultValue)
+    {
+        await InitializeAsync();
+        var config = await _database.Table<AppConfig>().Where(c => c.Key == key).FirstOrDefaultAsync();
+        return config?.Value ?? defaultValue;
+    }
+
     public async Task SetConfigAsync(string key, string value)
     {
         await InitializeAsync();
