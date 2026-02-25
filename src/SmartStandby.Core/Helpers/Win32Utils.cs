@@ -70,4 +70,25 @@ public static class Win32Utils
     public const uint ID_TRAY_OPEN = 101;
     public const uint ID_TRAY_SLEEP = 102;
     public const uint ID_TRAY_EXIT = 103;
+
+    // --- User Activity ---
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct LASTINPUTINFO
+    {
+        public uint cbSize;
+        public uint dwTime;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
+
+    /// <summary>Returns how long the user has been idle in milliseconds.</summary>
+    public static uint GetIdleTimeMs()
+    {
+        var info = new LASTINPUTINFO { cbSize = (uint)Marshal.SizeOf<LASTINPUTINFO>() };
+        if (GetLastInputInfo(ref info))
+            return (uint)Environment.TickCount - info.dwTime;
+        return 0;
+    }
 }

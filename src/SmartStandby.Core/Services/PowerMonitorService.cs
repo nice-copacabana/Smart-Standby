@@ -109,18 +109,46 @@ public class PowerMonitorService : IDisposable
 
     private void StartBackpackGuard()
     {
-        // 20 minutes timeout for inactive wake
         const int timeoutMinutes = 20;
+        var deadline = DateTime.Now.AddMinutes(timeoutMinutes);
+
         _backpackGuardTimer?.Dispose();
-        _backpackGuardTimer = new System.Threading.Timer(async _ => 
+        _backpackGuardTimer = new System.Threading.Timer(async _ =>
         {
             Log.Information("Backpack Guard: Check triggered.");
-            // For now, we simply force hibernate if the timer fires.
-            // In a more advanced version, we would check GetLastInputInfo to see if user actually touched the PC.
-            await _sleepService.HibernateAsync();
-        }, null, TimeSpan.FromMinutes(timeoutMinutes), System.Threading.Timeout.InfiniteTimeSpan);
-        
-        Log.Information($"Backpack Guard Watchdog started. System will hibernate in {timeoutMinutes}m if no managed cancellation occurs.");
+
+            uint idleMs = Win32Utils.GetIdleTimeMs();
+            uint idleMinutes = idleMs / 60000;
+
+            if (DateTime.Now < deadline)
+            {
+                // Not yet at deadline — check if user is active
+                if (idleMs < 60_000) // active within last 60 seconds
+                {
+                    Log.Information($"Backpack Guard: User is active (idle {idleMs}ms). Resetting deadline.");
+                    deadline = DateTime.Now.AddMinutes(timeoutMinutes);
+                }
+                else
+                {
+                    Log.Information($"Backpack Guard: User idle for {idleMinutes}m. Waiting for deadline.");
+                }
+                return;
+            }
+
+            // Deadline reached — only hibernate if user has been idle the whole time
+            if (idleMs >= (uint)(timeoutMinutes * 60_000))
+            {
+                Log.Warning($"Backpack Guard: User idle for {idleMinutes}m. Triggering hibernation.");
+                await _sleepService.HibernateAsync();
+            }
+            else
+            {
+                Log.Information($"Backpack Guard: Deadline reached but user was recently active (idle {idleMs}ms). Resetting.");
+                deadline = DateTime.Now.AddMinutes(timeoutMinutes);
+            }
+        }, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1)); // check every minute
+
+        Log.Information($"Backpack Guard started. Will hibernate after {timeoutMinutes}m of user inactivity.");
     }
 
     private void StopBackpackGuard()
