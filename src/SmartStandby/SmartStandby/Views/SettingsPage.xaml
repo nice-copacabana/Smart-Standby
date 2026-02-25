@@ -70,6 +70,7 @@
                 <TextBlock Text="{Binding UpdateStatusText}" FontSize="12" Foreground="Gray" Visibility="{Binding UpdateStatusText, Converter={StaticResource StringVisibilityConverter}}" />
                 
                 <Button Content="Download Latest Version" 
+                        Command="{Binding OpenDownloadUrlCommand}"
                         Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}"
                         HorizontalAlignment="Left"
                         Style="{StaticResource AccentButtonStyle}"

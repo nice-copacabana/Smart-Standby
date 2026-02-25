@@ -18,6 +18,8 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string? _latestVersion;
 
+    private string? _latestDownloadUrl;
+
     [ObservableProperty]
     private bool _isUpdateAvailable;
 
@@ -156,6 +158,19 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void OpenDownloadUrl()
+    {
+        if (!string.IsNullOrEmpty(_latestDownloadUrl))
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = _latestDownloadUrl,
+                UseShellExecute = true
+            });
+        }
+    }
+
+    [RelayCommand]
     private async Task CheckForUpdatesAsync()
     {
         if (IsCheckingForUpdates) return;
@@ -172,6 +187,7 @@ public partial class SettingsViewModel : ObservableObject
             {
                 IsUpdateAvailable = true;
                 LatestVersion = latestVersion;
+                _latestDownloadUrl = downloadUrl;
                 UpdateStatusText = $"New version available: {latestVersion}";
             }
             else

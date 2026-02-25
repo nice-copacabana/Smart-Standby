@@ -8,11 +8,10 @@ public class InverseVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value is int count)
-        {
-            return count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        }
-        return Visibility.Visible;
+        bool invert = parameter?.ToString() == "invert";
+        bool isEmpty = value is int count && count == 0;
+        bool show = invert ? !isEmpty : isEmpty;
+        return show ? Visibility.Visible : Visibility.Collapsed;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotImplementedException();
