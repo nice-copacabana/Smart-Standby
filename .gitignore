@@ -25,3 +25,6 @@ logs/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+## Build Logs ##
+build_log*.txt
