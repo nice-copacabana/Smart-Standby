@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -31,6 +33,9 @@ namespace SmartStandby
     public partial class App : Application
     {
         private Window? _window;
+        private readonly SemaphoreSlim _shutdownLock = new(1, 1);
+        private bool _isCleanupCompleted;
+
         public IHost Host { get; }
 
         public App()
@@ -49,7 +54,7 @@ namespace SmartStandby
                     services.AddSingleton<SmartStandby.Core.Services.ProcessGuardian>();
                     services.AddSingleton<SmartStandby.Core.Services.PowerMonitorService>();
                     services.AddTransient<SmartStandby.Core.Services.SystemTweaker>();
-                    
+
                     services.AddTransient<SmartStandby.Core.Services.BlockerScanner>();
                     services.AddTransient<SmartStandby.Core.Services.NetworkManager>();
                     services.AddTransient<SmartStandby.Core.Services.SleepService>();
@@ -59,7 +64,7 @@ namespace SmartStandby
                     // ViewModels
                     services.AddTransient<SmartStandby.ViewModels.DashboardViewModel>();
                     services.AddTransient<SmartStandby.ViewModels.SettingsViewModel>();
-                    
+
                     // Windows
                     services.AddTransient<MainWindow>();
                 })
@@ -76,7 +81,7 @@ namespace SmartStandby
         {
             var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
             string resourcePath = "Resources/Strings.en-US.xaml"; // Default
-            
+
             if (culture.StartsWith("zh"))
             {
                 resourcePath = "Resources/Strings.zh-CN.xaml";
@@ -93,6 +98,12 @@ namespace SmartStandby
             }
         }
 
+        public async Task ExitApplicationAsync()
+        {
+            await CleanupBeforeExitAsync();
+            Application.Current.Exit();
+        }
+
         protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
             await Host.StartAsync();
@@ -105,9 +116,54 @@ namespace SmartStandby
             var powerMonitor = Host.Services.GetRequiredService<SmartStandby.Core.Services.PowerMonitorService>();
             powerMonitor.StartMonitoring();
 
+            // Ensure cleanup also runs for external process shutdown paths.
+            AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
+
             // Resolve Main Window with DI
             _window = Host.Services.GetRequiredService<MainWindow>();
             _window.Activate();
+        }
+
+        private async void CurrentDomain_ProcessExit(object? sender, EventArgs e)
+        {
+            await CleanupBeforeExitAsync();
+        }
+
+        private async Task CleanupBeforeExitAsync()
+        {
+            await _shutdownLock.WaitAsync();
+            try
+            {
+                if (_isCleanupCompleted)
+                {
+                    return;
+                }
+
+                try
+                {
+                    var powerMonitor = Host.Services.GetRequiredService<SmartStandby.Core.Services.PowerMonitorService>();
+                    powerMonitor.StopMonitoring();
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Failed to stop power monitor during app shutdown.");
+                }
+
+                try
+                {
+                    await Host.StopAsync();
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Failed to stop host during app shutdown.");
+                }
+
+                _isCleanupCompleted = true;
+            }
+            finally
+            {
+                _shutdownLock.Release();
+            }
         }
     }
 }

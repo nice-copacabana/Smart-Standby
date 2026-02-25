@@ -10,6 +10,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI;
 using SmartStandby.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
+using SmartStandby.Core.Helpers;
 
 namespace SmartStandby
 {
@@ -17,17 +18,18 @@ namespace SmartStandby
     {
         public MainWindowViewModel ViewModel { get; }
         private readonly PowerMonitorService _powerMonitor;
+        private bool _isExitRequested;
 
         public MainWindow(PowerMonitorService powerMonitor)
         {
             this.InitializeComponent();
-            
+
             _powerMonitor = powerMonitor;
             _powerMonitor.NotificationRequested += (s, msg) => _trayService.ShowNotification("Smart Standby Automation", msg);
 
             ViewModel = new MainWindowViewModel();
             ViewModel.Initialize(this);
-            
+
             // App Window & Title
             this.Title = "Smart Standby";
 
@@ -39,6 +41,8 @@ namespace SmartStandby
             NavView.SelectedItem = NavView.MenuItems[0];
 
             InterceptMessages();
+            GetAppWindow().Closing += MainWindow_Closing;
+            Closed += MainWindow_Closed;
         }
 
         private SmartStandby.Services.TrayIconService _trayService;
@@ -84,7 +88,7 @@ namespace SmartStandby
         {
             IntPtr hwnd = WindowNative.GetWindowHandle(this);
             IntPtr hMenu = Win32Utils.CreatePopupMenu();
-            
+
             Win32Utils.AppendMenu(hMenu, Win32Utils.MF_STRING, Win32Utils.ID_TRAY_OPEN, "Open Smart Standby");
             Win32Utils.AppendMenu(hMenu, Win32Utils.MF_STRING, Win32Utils.ID_TRAY_SLEEP, "Sleep Now");
             Win32Utils.AppendMenu(hMenu, Win32Utils.MF_STRING, 0, "-"); // Separator
@@ -113,7 +117,15 @@ namespace SmartStandby
                     await sleepService.ExecuteSmartSleepAsync(force: true);
                     break;
                 case Win32Utils.ID_TRAY_EXIT:
-                    Application.Current.Exit();
+                    _isExitRequested = true;
+                    if (Application.Current is App app)
+                    {
+                        await app.ExitApplicationAsync();
+                    }
+                    else
+                    {
+                        Application.Current.Exit();
+                    }
                     break;
             }
         }
@@ -125,25 +137,36 @@ namespace SmartStandby
             return AppWindow.GetFromWindowId(windowId);
         }
 
+        private void MainWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args)
+        {
+            if (_isExitRequested)
+            {
+                return;
+            }
+
+            args.Cancel = true;
+            sender.Hide();
+        }
+
         private void MainWindow_Closed(object sender, WindowEventArgs args)
         {
-             _trayService?.Dispose();
+            _trayService?.Dispose();
         }
 
         private void NavView_Loaded(object sender, RoutedEventArgs e)
         {
-             // Ensure correct initial selection
-             if (NavView.MenuItems.Count > 0)
-             {
-                 NavView.SelectedItem = NavView.MenuItems[0];
-             }
+            // Ensure correct initial selection
+            if (NavView.MenuItems.Count > 0)
+            {
+                NavView.SelectedItem = NavView.MenuItems[0];
+            }
         }
 
         private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
         {
             if (args.IsSettingsSelected)
             {
-                 ContentFrame.Navigate(typeof(SettingsPage));
+                ContentFrame.Navigate(typeof(SettingsPage));
             }
             else if (args.SelectedItemContainer != null)
             {
