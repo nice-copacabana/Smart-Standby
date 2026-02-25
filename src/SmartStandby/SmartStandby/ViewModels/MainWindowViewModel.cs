@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml;
@@ -20,8 +21,14 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ExitApplication()
+    private async Task ExitApplication()
     {
+        if (Application.Current is App app)
+        {
+            await app.ExitApplicationAsync();
+            return;
+        }
+
         Application.Current.Exit();
     }
 }
