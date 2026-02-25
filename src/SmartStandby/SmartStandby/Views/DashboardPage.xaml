@@ -16,6 +16,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
@@ -85,7 +86,11 @@
                         <SymbolIcon Symbol="Clock" Margin="0,0,16,0" Foreground="{ThemeResource SystemAccentColor}" VerticalAlignment="Center"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="{Binding SleepTime, StringFormat='{}{0:MM/dd HH:mm}'}" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding HealthMessage}" FontSize="12" Opacity="0.7"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="{Binding HealthMessage}" FontSize="12" Opacity="0.7"/>
+                                <TextBlock Text="{Binding WakeSource, StringFormat='· Wake: {0}'}" FontSize="12" Opacity="0.5"
+                                           Visibility="{Binding WakeSource, Converter={StaticResource StringVisibilityConverter}}"/>
+                            </StackPanel>
                         </StackPanel>
                         <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -108,15 +113,61 @@
             <TextBlock Text="{StaticResource NoSessionsMessage}" Opacity="0.4" HorizontalAlignment="Center"/>
         </StackPanel>
 
+        <!-- Blockers Section -->
+        <StackPanel Grid.Row="5" Margin="24,0,24,0" Spacing="8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Sleep Blockers" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center"/>
+                <Button Grid.Column="1" Command="{Binding RefreshBlockersCommand}" Content="Scan" Width="80"/>
+            </Grid>
+
+            <!-- Blocker list (visible when blockers exist) -->
+            <ListView ItemsSource="{Binding Blockers}" MaxHeight="160"
+                      Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                      CornerRadius="8" Padding="8"
+                      Visibility="{Binding Blockers.Count, Converter={StaticResource InverseVisibilityConverter}, ConverterParameter=invert}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <SymbolIcon Symbol="Block" Foreground="OrangeRed" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
+                                <TextBlock Text="{Binding Type}" FontSize="11" Opacity="0.6"/>
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <!-- No blockers state -->
+            <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16"
+                  Visibility="{Binding Blockers.Count, Converter={StaticResource InverseVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                    <SymbolIcon Symbol="Accept" Foreground="Green"/>
+                    <TextBlock Text="No sleep blockers detected" Opacity="0.7" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+
         <!-- Footer -->
-        <StackPanel Grid.Row="5" Margin="24,12,24,24" Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
-            <Button Command="{Binding RefreshBlockersCommand}" Content="Refresh Blockers" Width="120" Height="40"/>
+        <StackPanel Grid.Row="6" Margin="24,12,24,24" Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
             <Button Command="{Binding SmartSleepCommand}" Content="{StaticResource ButtonSmartSleep}" Style="{StaticResource AccentButtonStyle}" Width="160" Height="40" Background="#FF0078D7" Foreground="White" FontSize="16" FontWeight="SemiBold"/>
         </StackPanel>
         
         <!-- Loading Overlay -->
-        <Grid Grid.RowSpan="6" Background="#88000000" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
-            <ProgressRing IsActive="True" Width="64" Height="64" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <Grid Grid.RowSpan="7" Background="#88000000" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
+                <ProgressRing IsActive="True" Width="64" Height="64" HorizontalAlignment="Center"/>
+                <TextBlock Text="{Binding StatusMessage}" Foreground="White" FontSize="16" HorizontalAlignment="Center"/>
+            </StackPanel>
         </Grid>
     </Grid>
 </Page>

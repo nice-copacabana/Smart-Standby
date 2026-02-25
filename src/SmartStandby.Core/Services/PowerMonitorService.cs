@@ -84,6 +84,9 @@ public class PowerMonitorService : IDisposable
         {
             Log.Information("System is Resuming (Wake).");
 
+            // Detect wake source from Event Log
+            string wakeSource = await DetectWakeSourceAsync();
+
             // Restore network first
             await _sleepService.WakeUpAsync();
 
@@ -96,13 +99,13 @@ public class PowerMonitorService : IDisposable
             // Find the last session and update wake time
             var sessions = await _db.GetRecentSessionsAsync(1);
             var lastSession = sessions.FirstOrDefault();
-            
-            // Update if it's an open session (WakeTime is default)
+
             if (lastSession != null && lastSession.WakeTime == default(DateTime))
             {
                 lastSession.WakeTime = DateTime.Now;
+                lastSession.WakeSource = wakeSource;
                 await _db.UpdateSessionAsync(lastSession);
-                Log.Information($"Session Updated. Sleep: {lastSession.SleepTime}, Wake: {lastSession.WakeTime}");
+                Log.Information($"Session Updated. Sleep: {lastSession.SleepTime}, Wake: {lastSession.WakeTime}, Source: {wakeSource}");
             }
         }
     }
@@ -214,6 +217,28 @@ public class PowerMonitorService : IDisposable
             Log.Error(ex, "Failed to perform real wake-up health check.");
             await SaveHealthStatusAsync("Error", "Failed to perform health check.");
         }
+    }
+
+    private async Task<string> DetectWakeSourceAsync()
+    {
+        try
+        {
+            string script = @"
+                $event = Get-WinEvent -FilterHashtable @{LogName='System'; ID=107; StartTime=(Get-Date).AddMinutes(-2)} -MaxEvents 1 -ErrorAction SilentlyContinue
+                if ($event) { $event.Message } else { 'Unknown' }
+            ";
+            string result = await _ps.ExecuteScriptAsync(script);
+            if (result.Contains("Power Button")) return "PowerButton";
+            if (result.Contains("network")) return "Network";
+            if (result.Contains("RTC")) return "Scheduled";
+            if (result.Contains("USB") || result.Contains("HID")) return "Mouse/Keyboard";
+            if (!string.IsNullOrWhiteSpace(result) && result != "Unknown") return result.Trim().Split('\n')[0].Trim();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Could not detect wake source.");
+        }
+        return "Unknown";
     }
 
     private async Task SaveHealthStatusAsync(string status, string message)

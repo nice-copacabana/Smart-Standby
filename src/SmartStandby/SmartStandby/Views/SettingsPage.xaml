@@ -8,7 +8,7 @@
     mc:Ignorable="d"
     x:Name="RootPage">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="24">
+    <ScrollViewer Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="24" VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="20">
             <TextBlock Text="{StaticResource SettingsHeader}" Style="{ThemeResource TitleTextBlockStyle}"/>
 
@@ -70,6 +70,7 @@
                 <TextBlock Text="{Binding UpdateStatusText}" FontSize="12" Foreground="Gray" Visibility="{Binding UpdateStatusText, Converter={StaticResource StringVisibilityConverter}}" />
                 
                 <Button Content="Download Latest Version" 
+                        Command="{Binding OpenDownloadUrlCommand}"
                         Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}"
                         HorizontalAlignment="Left"
                         Style="{StaticResource AccentButtonStyle}"
@@ -109,5 +110,5 @@
                 <Button Command="{Binding SaveSettingsCommand}" Content="Save" Style="{StaticResource AccentButtonStyle}"/>
             </StackPanel>
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>

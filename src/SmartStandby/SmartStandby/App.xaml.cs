@@ -61,6 +61,7 @@ namespace SmartStandby
                     services.AddSingleton<HttpClient>();
                     services.AddTransient<SmartStandby.Core.Services.UpdateService>();
 
+                    services.AddSingleton<SmartStandby.Services.ToastNotificationService>();
                     // ViewModels
                     services.AddTransient<SmartStandby.ViewModels.DashboardViewModel>();
                     services.AddTransient<SmartStandby.ViewModels.SettingsViewModel>();
@@ -114,6 +115,8 @@ namespace SmartStandby
 
             // Start Power Monitoring
             var powerMonitor = Host.Services.GetRequiredService<SmartStandby.Core.Services.PowerMonitorService>();
+            var toastService = Host.Services.GetRequiredService<SmartStandby.Services.ToastNotificationService>();
+            powerMonitor.NotificationRequested += (s, msg) => toastService.Show("Smart Standby", msg);
             powerMonitor.StartMonitoring();
 
             // Ensure cleanup also runs for external process shutdown paths.

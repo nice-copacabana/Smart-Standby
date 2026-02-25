@@ -148,19 +148,17 @@ public partial class DashboardViewModel : ObservableObject
     {
         if (IsBusy) return;
         IsBusy = true;
-        StatusMessage = "Initiating Smart Sleep...";
 
         try
         {
+            for (int i = 3; i > 0; i--)
+            {
+                StatusMessage = $"Sleeping in {i}...";
+                await Task.Delay(1000);
+            }
+            StatusMessage = "Initiating Smart Sleep...";
             bool success = await _sleepService.ExecuteSmartSleepAsync(force: true);
-            if (success)
-            {
-                StatusMessage = "System is going to sleep...";
-            }
-            else
-            {
-                StatusMessage = "Sleep trigger failed (or cancelled).";
-            }
+            StatusMessage = success ? "System is going to sleep..." : "Sleep trigger failed.";
         }
         catch (Exception ex)
         {
