@@ -7,6 +7,7 @@ public class NetworkManager
 {
     private readonly PowerShellHelper _ps;
     private const string WlanInterfaceName = "Wi-Fi"; // Common default, might need auto-detection later
+    private string? _lastConnectedProfile;
 
     public NetworkManager(PowerShellHelper ps)
     {
@@ -16,18 +17,41 @@ public class NetworkManager
     public async Task DisconnectWifiAsync()
     {
         Log.Information("Attempting to disconnect Wi-Fi...");
+
+        // Save the currently connected profile name before disconnecting
+        try
+        {
+            string profileResult = await _ps.ExecuteScriptAsync(
+                $"(netsh wlan show interfaces | Select-String 'Profile\\s*:\\s*(.+)' | ForEach-Object {{ $_.Matches[0].Groups[1].Value.Trim() }}) -join ''");
+            if (!string.IsNullOrWhiteSpace(profileResult))
+            {
+                _lastConnectedProfile = profileResult.Trim();
+                Log.Information($"Saved Wi-Fi profile for reconnect: '{_lastConnectedProfile}'");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Could not save current Wi-Fi profile name.");
+        }
+
         await _ps.ExecuteScriptAsync($"netsh wlan disconnect interface=\"{WlanInterfaceName}\"");
     }
 
     public async Task ConnectWifiAsync()
     {
         Log.Information("Attempting to connect Wi-Fi...");
-        // Attempts to connect to the last known profile
-        await _ps.ExecuteScriptAsync($"netsh wlan connect name=CurrentProfile interface=\"{WlanInterfaceName}\"");
-        // Note: 'netsh wlan connect' usually requires a specific profile name. 
-        // For a robust 'Resume' feature, we might need to store the profile name before disconnecting.
-        // For Day 2 MVP, we will try a simple 'connect' which usually uses auto-connect logic if available, 
-        // or we can refine this to capture the profile logic later.
+
+        if (!string.IsNullOrWhiteSpace(_lastConnectedProfile))
+        {
+            Log.Information($"Reconnecting to saved profile: '{_lastConnectedProfile}'");
+            await _ps.ExecuteScriptAsync($"netsh wlan connect name=\"{_lastConnectedProfile}\" interface=\"{WlanInterfaceName}\"");
+        }
+        else
+        {
+            // Fallback: trigger auto-connect by enabling/disabling the adapter
+            Log.Warning("No saved Wi-Fi profile. Falling back to adapter toggle to trigger auto-connect.");
+            await _ps.ExecuteScriptAsync($"netsh wlan connect interface=\"{WlanInterfaceName}\"");
+        }
     }
     
     /// <summary>
