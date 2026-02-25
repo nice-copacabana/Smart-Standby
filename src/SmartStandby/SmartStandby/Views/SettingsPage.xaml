@@ -8,7 +8,7 @@
     mc:Ignorable="d"
     x:Name="RootPage">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="24">
+    <ScrollViewer Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="24" VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="20">
             <TextBlock Text="{StaticResource SettingsHeader}" Style="{ThemeResource TitleTextBlockStyle}"/>
 
@@ -110,5 +110,5 @@
                 <Button Command="{Binding SaveSettingsCommand}" Content="Save" Style="{StaticResource AccentButtonStyle}"/>
             </StackPanel>
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>
