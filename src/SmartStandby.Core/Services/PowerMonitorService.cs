@@ -83,7 +83,10 @@ public class PowerMonitorService : IDisposable
         else if (e.Mode == PowerModes.Resume)
         {
             Log.Information("System is Resuming (Wake).");
-            
+
+            // Restore network first
+            await _sleepService.WakeUpAsync();
+
             // Start Backpack Guard Watchdog
             StartBackpackGuard();
 
@@ -222,7 +225,7 @@ public class PowerMonitorService : IDisposable
                     Log.Warning($"Automation Access: Low Battery detected ({batteryPercent}% <= {threshold}%). Triggering sleep.");
                     NotificationRequested?.Invoke(this, $"Low Battery ({batteryPercent}%). Entering Smart Sleep...");
                     await Task.Delay(3000); // Give user a moment to see notification
-                    await _sleepService.SmartSleepAsync();
+                    await _sleepService.ExecuteSmartSleepAsync(force: true);
                     return;
                 }
             }
@@ -241,7 +244,7 @@ public class PowerMonitorService : IDisposable
                          Log.Information($"Automation Access: Scheduled time reached ({scheduleTime}). Triggering sleep.");
                          NotificationRequested?.Invoke(this, "Scheduled Sleep time reached. Entering Smart Sleep...");
                          await Task.Delay(3000);
-                         await _sleepService.SmartSleepAsync();
+                         await _sleepService.ExecuteSmartSleepAsync(force: true);
                          
                          // Pause timer briefly to avoid double trigger in same minute? 
                          // Actually the sleep will suspend the system, so next tick will be after wake.
