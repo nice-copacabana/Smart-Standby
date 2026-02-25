@@ -1,13 +1,12 @@
 using System.Net.Http.Json;
 using System.Reflection;
+using Serilog;
 
 namespace SmartStandby.Core.Services;
 
 public class UpdateService
 {
     private readonly HttpClient _httpClient;
-    // Note: This is a placeholder URL for demonstration. 
-    // In a real scenario, this would point to a real version JSON file.
     private const string UpdateUrl = "https://raw.githubusercontent.com/nice-copacabana/Smart-Standby/main/version.json";
 
     public UpdateService(HttpClient httpClient)
@@ -41,9 +40,13 @@ public class UpdateService
                 }
             }
         }
-        catch (Exception)
+        catch (HttpRequestException ex)
         {
-            // Silently fail for now, or could log to Serilog if injected.
+            Log.Warning(ex, "Update check failed: network error.");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Update check failed: unexpected error.");
         }
 
         return (false, null, null);
