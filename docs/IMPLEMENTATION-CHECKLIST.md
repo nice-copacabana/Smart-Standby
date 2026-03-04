@@ -16,8 +16,8 @@
 
 - [ ] 新增 `SleepDiagnosticsService`
 - [ ] 统一失败码与建议文案
-- [ ] Dashboard 展示“当前能力画像+策略解释”
-- [ ] 设置页增加策略模式与阈值开关
+- [x] Dashboard 展示“当前能力画像+策略解释”
+- [x] 设置页增加策略模式与阈值开关
 
 ## Milestone C：唤醒编排与可靠性
 

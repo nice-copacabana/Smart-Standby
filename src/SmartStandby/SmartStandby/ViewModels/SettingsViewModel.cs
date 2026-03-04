@@ -31,6 +31,14 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     public partial bool EnableNetworkDisconnect { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool SmartStandbyEnabled { get; set; } = true;
+    partial void OnSmartStandbyEnabledChanged(bool value) => SaveSettingsCommand.Execute(null);
+
+    [ObservableProperty]
+    public partial string SmartStandbyMode { get; set; } = "Balanced";
+    partial void OnSmartStandbyModeChanged(string value) => SaveSettingsCommand.Execute(null);
     partial void OnEnableNetworkDisconnectChanged(bool value) => SaveSettingsCommand.Execute(null);
 
     [ObservableProperty]
@@ -65,6 +73,13 @@ public partial class SettingsViewModel : ObservableObject
     public partial string NewProcessName { get; set; } = string.Empty;
 
     public ObservableCollection<string> WhitelistProcesses { get; } = new();
+
+    public ObservableCollection<string> SmartStandbyModes { get; } = new()
+    {
+        "Balanced",
+        "Reachability",
+        "Eco"
+    };
 
     [RelayCommand]
     public async Task ClearHistoryAsync()
@@ -108,6 +123,10 @@ public partial class SettingsViewModel : ObservableObject
 
     private async void LoadSettings()
     {
+        var smartOptions = await _databaseService.GetSmartStandbyOptionsAsync();
+        SmartStandbyEnabled = smartOptions.Enabled;
+        SmartStandbyMode = smartOptions.Mode;
+
         EnableNetworkDisconnect = await _databaseService.GetConfigBoolAsync("EnableNetworkDisconnect", true);
         EnableTdrPatch = await _databaseService.GetConfigBoolAsync("EnableTdrPatch", false);
         EnableRunOnStartup = await _databaseService.GetConfigBoolAsync("EnableRunOnStartup", false);
@@ -217,6 +236,12 @@ public partial class SettingsViewModel : ObservableObject
         await _databaseService.SetConfigAsync("LowBatteryThreshold", LowBatteryThreshold.ToString());
         await _databaseService.SetConfigBoolAsync("EnableScheduledSleep", EnableScheduledSleep);
         await _databaseService.SetConfigAsync("ScheduledSleepTime", ScheduledSleepTime.ToString());
+
+        var options = await _databaseService.GetSmartStandbyOptionsAsync();
+        options.Enabled = SmartStandbyEnabled;
+        options.Mode = SmartStandbyMode;
+        options.BatteryLowThresholdPercent = LowBatteryThreshold;
+        await _databaseService.SetSmartStandbyOptionsAsync(options);
         
         // Apply System Tweaks immediately
         _tweaker.ApplyTdrPatch(EnableTdrPatch);

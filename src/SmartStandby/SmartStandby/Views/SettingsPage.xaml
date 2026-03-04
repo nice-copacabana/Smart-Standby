@@ -15,6 +15,14 @@
             <!-- Toggles -->
             <StackPanel Spacing="10">
                 <TextBlock Text="{StaticResource ConfigGeneral}" Style="{ThemeResource SubtitleTextBlockStyle}"/>
+
+                <ToggleSwitch Header="Smart-Standby Policy Engine" IsOn="{Binding SmartStandbyEnabled}" OnContent="Enabled" OffContent="Disabled"/>
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock Text="Policy Mode" VerticalAlignment="Center"/>
+                    <ComboBox Width="180"
+                              ItemsSource="{Binding SmartStandbyModes}"
+                              SelectedItem="{Binding SmartStandbyMode, Mode=TwoWay}"/>
+                </StackPanel>
                 <ToggleSwitch Header="{StaticResource ConfigNetwork}" IsOn="{Binding EnableNetworkDisconnect}" OnContent="Enabled" OffContent="Disabled"/>
                 <ToggleSwitch Header="{StaticResource ConfigStartup}" IsOn="{Binding EnableRunOnStartup}" OnContent="Enabled" OffContent="Disabled"/>
                 <ToggleSwitch Header="{StaticResource ConfigTdr}" IsOn="{Binding EnableTdrPatch}" OnContent="Enabled" OffContent="Disabled"/>
