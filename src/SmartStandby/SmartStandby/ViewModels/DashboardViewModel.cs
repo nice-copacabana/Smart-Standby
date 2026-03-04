@@ -15,6 +15,7 @@ public partial class DashboardViewModel : ObservableObject
     private readonly BlockerScanner _scanner;
     private readonly SleepService _sleepService;
     private readonly DatabaseService _db;
+    private readonly CapabilityProbeService _capabilityProbeService;
 
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = "Ready";
@@ -31,20 +32,31 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     private string _healthColor = "Gray";
 
+    [ObservableProperty]
+    public partial string CurrentPolicyTarget { get; set; } = "Unknown";
+
+    [ObservableProperty]
+    public partial string PolicyExplainText { get; set; } = "No policy decision yet.";
+
+    [ObservableProperty]
+    public partial string CapabilitySummary { get; set; } = "Capability not probed.";
+
     public ObservableCollection<BlockerInfo> Blockers { get; } = new();
     
     public ObservableCollection<ChartDataPoint> ChartData { get; } = new();
 
     public ObservableCollection<SleepSession> RecentSessions { get; } = new();
 
-    public DashboardViewModel(BlockerScanner scanner, SleepService sleepService, DatabaseService db)
+    public DashboardViewModel(BlockerScanner scanner, SleepService sleepService, DatabaseService db, CapabilityProbeService capabilityProbeService)
     {
         _scanner = scanner;
         _sleepService = sleepService;
         _db = db;
+        _capabilityProbeService = capabilityProbeService;
         
         _ = LoadChartDataAsync();
         _ = RefreshHealthAsync();
+        _ = RefreshPolicyAsync();
     }
 
     private async Task RefreshHealthAsync()
@@ -132,6 +144,7 @@ public partial class DashboardViewModel : ObservableObject
                 Blockers.Add(item);
             }
             StatusMessage = $"Found {results.Count} blockers.";
+            await RefreshPolicyAsync();
         }
         catch (Exception)
         {
@@ -140,6 +153,26 @@ public partial class DashboardViewModel : ObservableObject
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RefreshPolicyAsync()
+    {
+        try
+        {
+            var profile = await _capabilityProbeService.ProbeAsync();
+            var decision = await _sleepService.PlanSleepAsync();
+
+            CurrentPolicyTarget = decision.TargetState;
+            PolicyExplainText = decision.ExplainText;
+            CapabilitySummary = $"S0:{profile.HasS0} S3:{profile.HasS3} ETH:{profile.EthernetConnected} WiFi:{profile.WifiConnected} AC:{profile.IsAcPowered} Batt:{profile.BatteryPercent}%";
+        }
+        catch (Exception ex)
+        {
+            CurrentPolicyTarget = "Unknown";
+            PolicyExplainText = "Policy probe failed.";
+            CapabilitySummary = ex.Message;
         }
     }
 
@@ -158,7 +191,15 @@ public partial class DashboardViewModel : ObservableObject
             }
             StatusMessage = "Initiating Smart Sleep...";
             bool success = await _sleepService.ExecuteSmartSleepAsync(force: true);
-            StatusMessage = success ? "System is going to sleep..." : "Sleep trigger failed.";
+            if (success)
+            {
+                StatusMessage = "System is going to sleep...";
+                await RefreshPolicyAsync();
+            }
+            else
+            {
+                StatusMessage = "Sleep trigger failed (or cancelled).";
+            }
         }
         catch (Exception ex)
         {

@@ -38,8 +38,14 @@
                     <TextBlock Text="{Binding HealthStatus}" Foreground="{Binding HealthColor}" FontWeight="Bold" FontSize="12"/>
                 </StackPanel>
                 <TextBlock Text="{Binding HealthMessage}" FontSize="12" Opacity="0.8" FontStyle="Italic"/>
+                <TextBlock Text="{Binding CurrentPolicyTarget, StringFormat='{}Policy: {0}'}" FontSize="12" FontWeight="SemiBold" Margin="0,6,0,0"/>
+                <TextBlock Text="{Binding PolicyExplainText}" FontSize="12" Opacity="0.8" TextWrapping="WrapWholeWords" MaxWidth="520"/>
+                <TextBlock Text="{Binding CapabilitySummary}" FontSize="11" Opacity="0.6" TextWrapping="WrapWholeWords" MaxWidth="520"/>
             </StackPanel>
-            <Button Grid.Column="1" Content="{StaticResource ButtonSmartSleep}" Style="{StaticResource AccentButtonStyle}" Command="{Binding SmartSleepCommand}" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="8">
+                <Button Content="Policy Refresh" Command="{Binding RefreshPolicyCommand}"/>
+                <Button Content="{StaticResource ButtonSmartSleep}" Style="{StaticResource AccentButtonStyle}" Command="{Binding SmartSleepCommand}" />
+            </StackPanel>
         </Grid>
 
         <!-- Chart -->
