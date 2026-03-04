@@ -59,6 +59,7 @@ namespace SmartStandby
                     services.AddTransient<SmartStandby.Core.Services.NetworkManager>();
                     services.AddTransient<SmartStandby.Core.Services.CapabilityProbeService>();
                     services.AddTransient<SmartStandby.Core.Services.StandbyPolicyEngine>();
+                    services.AddTransient<SmartStandby.Core.Services.WakeOrchestrator>();
                     services.AddTransient<SmartStandby.Core.Services.SleepService>();
                     services.AddSingleton<HttpClient>();
                     services.AddTransient<SmartStandby.Core.Services.UpdateService>();

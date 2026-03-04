@@ -458,6 +458,9 @@ Smart-Standby 已有坚实底座（电源监控、阻塞扫描、网络管理、
 - Added services in `src/SmartStandby.Core/Services`:
   - `CapabilityProbeService.cs`
   - `StandbyPolicyEngine.cs`
+  - `WakeOrchestrator.cs` (skeleton)
+- Added model in `src/SmartStandby.Core/Models`:
+  - `WakeResult.cs`
 - Updated `AppConfig.cs` with `[Ignore]` property:
   - `SmartStandbyOptions SmartStandbyOptions { get; set; } = new();`
 - Updated `SleepService.cs`:

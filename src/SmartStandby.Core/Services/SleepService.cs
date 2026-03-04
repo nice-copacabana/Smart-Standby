@@ -12,6 +12,7 @@ public class SleepService
     private readonly DatabaseService _db;
     private readonly CapabilityProbeService _capabilityProbeService;
     private readonly StandbyPolicyEngine _standbyPolicyEngine;
+    private readonly WakeOrchestrator _wakeOrchestrator;
 
     public PolicyDecision? LastPolicyDecision { get; private set; }
 
@@ -21,7 +22,8 @@ public class SleepService
         ProcessGuardian guardian,
         DatabaseService db,
         CapabilityProbeService capabilityProbeService,
-        StandbyPolicyEngine standbyPolicyEngine)
+        StandbyPolicyEngine standbyPolicyEngine,
+        WakeOrchestrator wakeOrchestrator)
     {
         _scanner = scanner;
         _network = network;
@@ -29,6 +31,7 @@ public class SleepService
         _db = db;
         _capabilityProbeService = capabilityProbeService;
         _standbyPolicyEngine = standbyPolicyEngine;
+        _wakeOrchestrator = wakeOrchestrator;
     }
 
     /// <summary>
@@ -121,6 +124,13 @@ public class SleepService
         var decision = _standbyPolicyEngine.Decide(profile, options, force);
         LastPolicyDecision = decision;
         return decision;
+    }
+
+    public async Task<WakeResult> TryWakePlanAsync(CancellationToken cancellationToken = default)
+    {
+        var profile = await _capabilityProbeService.ProbeAsync(cancellationToken);
+        var options = await _db.GetSmartStandbyOptionsAsync();
+        return await _wakeOrchestrator.TryWakeAsync(profile, options, cancellationToken);
     }
 
     public async Task HibernateAsync()
