@@ -21,8 +21,8 @@
 
 ## Milestone C：唤醒编排与可靠性
 
-- [ ] 新增 `WakeOrchestrator`
-- [ ] 回退链路：WOL -> 重试 -> 降级建议
+- [x] 新增 `WakeOrchestrator`
+- [x] 回退链路：WOL -> 重试 -> 降级建议（Phase-1 失败码版）
 - [ ] 连续失败自动降级策略
 - [ ] 写入统计数据（成功率、耗时、失败原因）
 
