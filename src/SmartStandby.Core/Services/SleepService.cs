@@ -10,13 +10,25 @@ public class SleepService
     private readonly NetworkManager _network;
     private readonly ProcessGuardian _guardian;
     private readonly DatabaseService _db;
+    private readonly CapabilityProbeService _capabilityProbeService;
+    private readonly StandbyPolicyEngine _standbyPolicyEngine;
 
-    public SleepService(BlockerScanner scanner, NetworkManager network, ProcessGuardian guardian, DatabaseService db)
+    public PolicyDecision? LastPolicyDecision { get; private set; }
+
+    public SleepService(
+        BlockerScanner scanner,
+        NetworkManager network,
+        ProcessGuardian guardian,
+        DatabaseService db,
+        CapabilityProbeService capabilityProbeService,
+        StandbyPolicyEngine standbyPolicyEngine)
     {
         _scanner = scanner;
         _network = network;
         _guardian = guardian;
         _db = db;
+        _capabilityProbeService = capabilityProbeService;
+        _standbyPolicyEngine = standbyPolicyEngine;
     }
 
     /// <summary>
@@ -26,6 +38,8 @@ public class SleepService
     public async Task<bool> ExecuteSmartSleepAsync(bool force = false)
     {
         Log.Information("Starting Smart Sleep Sequence...");
+        var plan = await PlanSleepAsync(force);
+        Log.Information("Smart-Standby policy decision: {TargetState} | {ExplainText}", plan.TargetState, plan.ExplainText);
 
         // 1. Detect Blockers
         var blockers = await _scanner.ScanAsync();
@@ -98,6 +112,15 @@ public class SleepService
         // For this function, strictly speaking, we just instigated sleep.
         
         return true;
+    }
+
+    public async Task<PolicyDecision> PlanSleepAsync(bool force = false, CancellationToken cancellationToken = default)
+    {
+        var profile = await _capabilityProbeService.ProbeAsync(cancellationToken);
+        var options = await _db.GetSmartStandbyOptionsAsync();
+        var decision = _standbyPolicyEngine.Decide(profile, options, force);
+        LastPolicyDecision = decision;
+        return decision;
     }
 
     public async Task HibernateAsync()

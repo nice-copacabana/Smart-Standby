@@ -8,4 +8,7 @@ public class AppConfig
     public string Key { get; set; } = string.Empty;
 
     public string Value { get; set; } = string.Empty;
+
+    [Ignore]
+    public SmartStandbyOptions SmartStandbyOptions { get; set; } = new();
 }

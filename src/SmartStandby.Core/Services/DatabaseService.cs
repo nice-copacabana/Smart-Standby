@@ -2,6 +2,7 @@ using SQLite;
 using System.Linq;
 using SmartStandby.Core.Models;
 using System.IO;
+using System.Text.Json;
 
 namespace SmartStandby.Core.Services;
 
@@ -80,13 +81,6 @@ public class DatabaseService
         return value ?? defaultValue;
     }
 
-    public async Task<string> GetConfigAsync(string key, string defaultValue)
-    {
-        await InitializeAsync();
-        var config = await _database.Table<AppConfig>().Where(c => c.Key == key).FirstOrDefaultAsync();
-        return config?.Value ?? defaultValue;
-    }
-
     public async Task SetConfigAsync(string key, string value)
     {
         await InitializeAsync();
@@ -104,6 +98,32 @@ public class DatabaseService
     public async Task SetConfigBoolAsync(string key, bool value)
     {
         await SetConfigAsync(key, value.ToString());
+    }
+
+    public async Task<SmartStandbyOptions> GetSmartStandbyOptionsAsync()
+    {
+        const string key = "SmartStandbyOptions";
+        var json = await GetConfigAsync(key);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new SmartStandbyOptions();
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<SmartStandbyOptions>(json) ?? new SmartStandbyOptions();
+        }
+        catch
+        {
+            return new SmartStandbyOptions();
+        }
+    }
+
+    public async Task SetSmartStandbyOptionsAsync(SmartStandbyOptions options)
+    {
+        const string key = "SmartStandbyOptions";
+        var json = JsonSerializer.Serialize(options);
+        await SetConfigAsync(key, json);
     }
 
     // --- Whitelist ---

@@ -17,6 +17,7 @@ public class PowerMonitorService : IDisposable
     private System.Threading.Timer? _automationTimer;
     
     public event EventHandler<string>? NotificationRequested;
+    public event EventHandler? ResumeReprobeRequested;
 
     public PowerMonitorService(DatabaseService db, SleepService sleepService, PowerShellHelper ps)
     {
@@ -107,6 +108,8 @@ public class PowerMonitorService : IDisposable
                 await _db.UpdateSessionAsync(lastSession);
                 Log.Information($"Session Updated. Sleep: {lastSession.SleepTime}, Wake: {lastSession.WakeTime}, Source: {wakeSource}");
             }
+
+            ResumeReprobeRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 
